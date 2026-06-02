@@ -1,0 +1,64 @@
+# 环境变量
+.env
+.env.local
+.env.*.local
+
+# 日志文件
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 操作系统文件
+.DS_Store
+Thumbs.db
+
+# IDE 配置
+.idea/
+.vscode/
+*.iml
+*.swp
+*.swo
+*~
+
+# 前端
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/.eslintcache
+
+# 后端
+backend/target/
+backend/.mvn/
+backend/*.class
+backend/.settings/
+backend/.project/
+backend/.classpath
+
+# Python
+ai-service/__pycache__/
+ai-service/*.py[cod]
+ai-service/$py.class/
+ai-service/.venv/
+ai-service/venv/
+ai-service/.env
+ai-service/.pytest_cache/
+ai-service/.mypy_cache/
+ai-service/*.egg-info/
+
+# 上传文件
+uploads/
+*.tmp
+
+# 数据库
+*.sqlite
+*.db
+# 保留数据库迁移脚本
+!backend/src/main/resources/db/migration/*.sql
+
+# 其他
+.bak
+.backup
+.cache
+ai-service/scripts/__pycache__/
