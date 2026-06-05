@@ -1,5 +1,6 @@
 package com.company.kb.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 /**
@@ -36,7 +37,7 @@ import lombok.Data;
  *       LoginRequest 对象。要求字段名与 JSON key 一致（或使用 {@code @JsonProperty} 映射）。</li>
  * </ul>
  *
- * @author Knowledge Base Team
+ * @author Geekyous Guo
  * @since 1.0.0
  * @see LoginResponse
  * @see com.company.kb.controller.AuthController
@@ -46,23 +47,13 @@ public class LoginRequest {
 
     /**
      * 用户名 — 登录凭证之一。
-     *
-     * <p>客户端发送 JSON 请求体示例：
-     * <pre>
-     * {
-     *   "username": "admin",
-     *   "password": "123456"
-     * }
-     * </pre>
-     * Spring MVC 的 {@code @RequestBody} 注解将此 JSON 反序列化为 LoginRequest 对象。</p>
      */
+    @Schema(description = "用户名", example = "admin", requiredMode = Schema.RequiredMode.REQUIRED)
     private String username;
 
     /**
      * 密码 — 登录凭证之二。
-     *
-     * <p>此处接收的是<b>明文密码</b>，在 Service 层会与数据库中的 BCrypt 哈希值进行比对。
-     * 生产环境中应确保登录接口使用 HTTPS 加密传输，防止密码被中间人截获。</p>
      */
+    @Schema(description = "密码", example = "123456", requiredMode = Schema.RequiredMode.REQUIRED)
     private String password;
 }

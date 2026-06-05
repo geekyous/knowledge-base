@@ -54,13 +54,13 @@ import java.time.LocalDateTime;
  *       自动填充，前提是主启动类上有 {@code @EnableJpaAuditing}</li>
  * </ul>
  *
- * @author Knowledge Base Team
+ * @author Geekyous Guo
  * @since 1.0.0
  * @see jakarta.persistence.Entity
  * @see org.springframework.data.jpa.domain.support.AuditingEntityListener
  */
 @Entity
-@Table(name = "users")
+@Table(name = "kb_users")
 @EntityListeners(AuditingEntityListener.class)
 @Data
 @Builder

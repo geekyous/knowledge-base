@@ -1,6 +1,7 @@
 package com.company.kb.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -50,7 +51,7 @@ import lombok.Data;
  * </ul>
  *
  * @param <T> 响应数据的类型
- * @author Knowledge Base Team
+ * @author Geekyous Guo
  * @since 1.0.0
  * @see com.fasterxml.jackson.annotation.JsonInclude
  */
@@ -65,21 +66,19 @@ public class ApiResponse<T> {
      * <p>注意：这是<b>业务状态码</b>，与 HTTP 状态码是两个概念。
      * HTTP 响应始终返回 200，具体业务结果通过此字段判断。</p>
      */
+    @Schema(description = "业务状态码，200 表示成功", example = "200")
     private int code;
 
     /**
      * 响应消息 — 人类可读的描述信息。
-     *
-     * <p>成功时通常为 "success" 或自定义消息；失败时为错误描述。</p>
      */
+    @Schema(description = "响应消息", example = "success")
     private String message;
 
     /**
      * 响应数据 — 泛型类型，携带实际的业务数据。
-     *
-     * <p>当 {@code code} 不是 200 时，此字段通常为 {@code null}，
-     * 并因 {@code @JsonInclude(NON_NULL)} 而不出现在 JSON 中。</p>
      */
+    @Schema(description = "响应数据")
     private T data;
 
     /**

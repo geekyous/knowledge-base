@@ -62,7 +62,7 @@ import java.util.List;
  *       这样 JWT 解析出的认证信息可以被后续的授权过滤器使用。</li>
  * </ul>
  *
- * @author Knowledge Base Team
+ * @author Geekyous Guo
  * @since 1.0.0
  * @see JwtAuthenticationFilter
  * @see SecurityFilterChain
@@ -137,6 +137,11 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/search/**").permitAll()
                 // 公开接口：分类浏览
                 .requestMatchers("/api/v1/categories/**").permitAll()
+                // 公开接口：Swagger UI 和 OpenAPI 文档
+                .requestMatchers("/swagger-ui.html").permitAll()
+                .requestMatchers("/swagger-ui/**").permitAll()
+                .requestMatchers("/v3/api-docs/**").permitAll()
+                .requestMatchers("/swagger-resources/**").permitAll()
                 // 其他所有请求都需要认证
                 .anyRequest().authenticated()
             )

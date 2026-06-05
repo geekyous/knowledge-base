@@ -1,5 +1,6 @@
 package com.company.kb.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -60,7 +61,7 @@ import lombok.NoArgsConstructor;
  *       是 DTO 的标准 Lombok 配置，既支持 Builder 构造，也支持 Jackson 反序列化。</li>
  * </ul>
  *
- * @author Knowledge Base Team
+ * @author Geekyous Guo
  * @since 1.0.0
  * @see LoginRequest
  * @see com.company.kb.service.AuthService
@@ -80,14 +81,13 @@ public class LoginResponse {
      * <p>Token 包含了用户的身份信息（用户名、角色、ID）和过期时间，
      * 服务端通过签名验证 Token 的真实性。无需在服务端存储 Session。</p>
      */
+    @Schema(description = "JWT 访问令牌，后续请求需放在 Authorization: Bearer <token> 头部")
     private String token;
 
     /**
      * 用户基本信息 — 登录成功后返回的用户摘要数据。
-     *
-     * <p>使用嵌套 DTO 而非完整的 User 实体，只包含前端需要的字段，
-     * 排除了密码、审计时间等敏感/无用字段。</p>
      */
+    @Schema(description = "用户基本信息")
     private UserInfo user;
 
     /**
@@ -105,19 +105,19 @@ public class LoginResponse {
     @AllArgsConstructor
     public static class UserInfo {
 
-        /** 用户唯一标识 */
+        @Schema(description = "用户唯一标识", example = "1")
         private Long id;
 
-        /** 用户名 */
+        @Schema(description = "用户名", example = "admin")
         private String username;
 
-        /** 邮箱 */
+        @Schema(description = "邮箱", example = "admin@company.com")
         private String email;
 
-        /** 用户角色（字符串形式，如 "ADMIN"） */
+        @Schema(description = "用户角色", example = "ADMIN", allowableValues = {"USER", "EDITOR", "ADMIN"})
         private String role;
 
-        /** 头像 URL */
+        @Schema(description = "头像 URL")
         private String avatar;
     }
 }

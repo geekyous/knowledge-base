@@ -53,7 +53,7 @@ import org.springframework.stereotype.Repository;
  *       这是软删除模式的要求——手动过滤"已删除"的记录。</li>
  * </ul>
  *
- * @author Knowledge Base Team
+ * @author Geekyous Guo
  * @since 1.0.0
  * @see JpaRepository
  * @see Document

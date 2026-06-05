@@ -49,7 +49,7 @@ import org.springframework.stereotype.Service;
  *       也不处理 SQL 细节（如 JPQL 查询）。它专注于业务规则的编排。</li>
  * </ul>
  *
- * @author Knowledge Base Team
+ * @author Geekyous Guo
  * @since 1.0.0
  * @see com.company.kb.controller.DocumentController
  * @see com.company.kb.repository.DocumentRepository

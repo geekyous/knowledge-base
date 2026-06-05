@@ -8,7 +8,7 @@ SET NAMES utf8mb4;
 -- 1. 用户数据 (3个: 管理员 + 编辑 + 普通用户)
 -- 密码均为 BCrypt 加密的 admin123
 -- =====================================================
-INSERT INTO users (id, username, password, email, phone, role, status) VALUES
+INSERT INTO kb_users (id, username, password, email, phone, role, status) VALUES
 (1, 'admin',  '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', 'admin@company.com',    '13800000001', 'ADMIN',  'ACTIVE'),
 (2, 'editor', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', 'editor@company.com',   '13800000002', 'EDITOR', 'ACTIVE'),
 (3, 'user1',  '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', 'user1@company.com',    '13800000003', 'USER',   'ACTIVE');
@@ -17,14 +17,14 @@ INSERT INTO users (id, username, password, email, phone, role, status) VALUES
 -- 2. 分类数据 (4个一级分类 + 二级分类)
 -- =====================================================
 -- 一级分类
-INSERT INTO categories (id, name, slug, description, icon, sort_order, parent_id) VALUES
+INSERT INTO kb_categories (id, name, slug, description, icon, sort_order, parent_id) VALUES
 (1,  '人事制度', 'hr',          '人力资源管理相关制度文档',   'Users',       1, NULL),
 (2,  '技术文档', 'tech',        '技术开发相关文档',           'Code',        2, NULL),
 (3,  '销售支持', 'sales',       '销售培训和支持材料',         'TrendCharts', 3, NULL),
 (4,  '合规法务', 'legal',       '法律法规和合规管理',         'Document',    4, NULL);
 
 -- 二级分类
-INSERT INTO categories (id, name, slug, description, icon, sort_order, parent_id) VALUES
+INSERT INTO kb_categories (id, name, slug, description, icon, sort_order, parent_id) VALUES
 (11, '招聘流程',   'hr-recruit',    '招聘管理流程',     'UserAdd',   1, 1),
 (12, '薪酬福利',   'hr-salary',     '薪酬和福利制度',   'Money',     2, 1),
 (13, '考勤制度',   'hr-attendance', '考勤和请假制度',   'Clock',     3, 1),
@@ -35,7 +35,7 @@ INSERT INTO categories (id, name, slug, description, icon, sort_order, parent_id
 -- =====================================================
 -- 3. 标签数据 (8个常用标签)
 -- =====================================================
-INSERT INTO tags (id, name, color, usage_count) VALUES
+INSERT INTO kb_tags (id, name, color, usage_count) VALUES
 (1,  '流程',   '#409EFF', 3),
 (2,  '规范',   '#67C23A', 2),
 (3,  '指南',   '#E6A23C', 2),
@@ -50,7 +50,7 @@ INSERT INTO tags (id, name, color, usage_count) VALUES
 -- =====================================================
 
 -- 文档1: 员工手册 (人事制度 > 招聘流程)
-INSERT INTO documents (id, title, summary, content, category_id, author_id, status, view_count, like_count, is_featured, published_at) VALUES
+INSERT INTO kb_documents (id, title, summary, content, category_id, author_id, status, view_count, like_count, is_featured, published_at) VALUES
 (1, '员工手册（2026版）',
  '公司员工行为规范和基本制度汇编',
  '# 员工手册（2026版）
@@ -107,7 +107,7 @@ INSERT INTO documents (id, title, summary, content, category_id, author_id, stat
  11, 1, 'PUBLISHED', 256, 18, TRUE, '2026-01-15 10:00:00');
 
 -- 文档2: 年假申请流程 (人事制度 > 考勤制度)
-INSERT INTO documents (id, title, summary, content, category_id, author_id, status, view_count, like_count, is_featured, published_at) VALUES
+INSERT INTO kb_documents (id, title, summary, content, category_id, author_id, status, view_count, like_count, is_featured, published_at) VALUES
 (2, '年假申请流程',
  '详细说明年假天数计算方法和申请审批流程',
  '# 年假申请流程
@@ -161,7 +161,7 @@ A: 可以。年假可以和周末、法定假日连续使用。',
  13, 2, 'PUBLISHED', 189, 12, TRUE, '2026-02-01 09:00:00');
 
 -- 文档3: 系统架构设计 (技术文档 > 架构设计)
-INSERT INTO documents (id, title, summary, content, category_id, author_id, status, view_count, like_count, is_featured, published_at) VALUES
+INSERT INTO kb_documents (id, title, summary, content, category_id, author_id, status, view_count, like_count, is_featured, published_at) VALUES
 (3, '企业知识库系统架构设计',
  '基于微服务架构的企业知识库系统整体技术架构',
  '# 企业知识库系统架构设计
@@ -226,7 +226,7 @@ INSERT INTO documents (id, title, summary, content, category_id, author_id, stat
  21, 2, 'PUBLISHED', 145, 9, TRUE, '2026-03-01 14:00:00');
 
 -- 文档4: API接口规范 (技术文档 > 接口文档)
-INSERT INTO documents (id, title, summary, content, category_id, author_id, status, view_count, like_count, is_featured, published_at) VALUES
+INSERT INTO kb_documents (id, title, summary, content, category_id, author_id, status, view_count, like_count, is_featured, published_at) VALUES
 (4, 'RESTful API 接口规范',
  '系统所有REST API的设计规范和通用约定',
  '# RESTful API 接口规范
@@ -307,7 +307,7 @@ INSERT INTO documents (id, title, summary, content, category_id, author_id, stat
  22, 2, 'PUBLISHED', 98, 7, FALSE, '2026-03-15 10:00:00');
 
 -- 文档5: 销售话术指南 (销售支持)
-INSERT INTO documents (id, title, summary, content, category_id, author_id, status, view_count, like_count, is_featured, published_at) VALUES
+INSERT INTO kb_documents (id, title, summary, content, category_id, author_id, status, view_count, like_count, is_featured, published_at) VALUES
 (5, '销售话术与客户沟通指南',
  '标准销售话术和客户常见问题应对',
  '# 销售话术与客户沟通指南
@@ -350,7 +350,7 @@ INSERT INTO documents (id, title, summary, content, category_id, author_id, stat
  3, 2, 'PUBLISHED', 78, 5, FALSE, '2026-04-01 11:00:00');
 
 -- 文档6: 合同管理办法 (合规法务，草稿状态)
-INSERT INTO documents (id, title, summary, content, category_id, author_id, status, view_count, like_count, is_featured, published_at) VALUES
+INSERT INTO kb_documents (id, title, summary, content, category_id, author_id, status, view_count, like_count, is_featured, published_at) VALUES
 (6, '合同管理暂行办法',
  '公司合同签订、审批、归档的管理规定',
  '# 合同管理暂行办法
@@ -386,7 +386,7 @@ INSERT INTO documents (id, title, summary, content, category_id, author_id, stat
 -- =====================================================
 -- 5. 文档-标签关联
 -- =====================================================
-INSERT INTO document_tags (document_id, tag_id) VALUES
+INSERT INTO kb_document_tags (document_id, tag_id) VALUES
 (1, 4), (1, 1), (1, 3),   -- 员工手册: 制度, 流程, 指南
 (2, 4), (2, 1),             -- 年假申请: 制度, 流程
 (3, 6), (3, 2),             -- 架构设计: 架构, 规范
@@ -399,10 +399,10 @@ INSERT INTO document_tags (document_id, tag_id) VALUES
 -- =====================================================
 
 -- 对话1: 关于年假
-INSERT INTO conversations (id, user_id, title, message_count) VALUES
+INSERT INTO kb_conversations (id, user_id, title, message_count) VALUES
 ('conv-001', 3, '年假相关咨询', 4);
 
-INSERT INTO messages (id, conversation_id, role, content, sources) VALUES
+INSERT INTO kb_messages (id, conversation_id, role, content, sources) VALUES
 (1, 'conv-001', 'USER', '如何申请年假？', NULL),
 (2, 'conv-001', 'ASSISTANT',
  '根据《员工手册》和《年假申请流程》规定：\n\n1. **年假天数**：工作1-5年享有5天，5-10年7天，10-15年10天，15年以上15天\n2. **申请流程**：至少提前15个工作日通过OA系统提交申请\n3. **审批流程**：直属领导 → 部门经理 → HR备案\n\n需要我详细说明某个步骤吗？',
@@ -413,20 +413,20 @@ INSERT INTO messages (id, conversation_id, role, content, sources) VALUES
  '[{"documentId": 2, "title": "年假申请流程", "snippet": "年假不可跨年累积，每年12月31日前需休完", "relevance": 0.92}]');
 
 -- 对话2: 技术相关
-INSERT INTO conversations (id, user_id, title, message_count) VALUES
+INSERT INTO kb_conversations (id, user_id, title, message_count) VALUES
 ('conv-002', 3, '系统架构咨询', 2);
 
-INSERT INTO messages (id, conversation_id, role, content, sources) VALUES
+INSERT INTO kb_messages (id, conversation_id, role, content, sources) VALUES
 (5, 'conv-002', 'USER', '知识库系统用了哪些技术栈？', NULL),
 (6, 'conv-002', 'ASSISTANT',
  '企业知识库系统采用混合架构：\n\n- **前端**: Vue 3 + TypeScript + Element Plus\n- **后端**: Java 17 + Spring Boot 3.2\n- **AI服务**: Python 3.11 + FastAPI + LangChain\n- **数据存储**: MySQL + Redis + Elasticsearch + Qdrant\n\nAI问答基于RAG（检索增强生成）架构，先检索相关文档再生成答案。',
  '[{"documentId": 3, "title": "企业知识库系统架构设计", "snippet": "采用前后端分离 + AI微服务的混合架构", "relevance": 0.98}]');
 
 -- 对话3: 销售相关
-INSERT INTO conversations (id, user_id, title, message_count) VALUES
+INSERT INTO kb_conversations (id, user_id, title, message_count) VALUES
 ('conv-003', 3, '销售支持咨询', 2);
 
-INSERT INTO messages (id, conversation_id, role, content, sources) VALUES
+INSERT INTO kb_messages (id, conversation_id, role, content, sources) VALUES
 (7, 'conv-003', 'USER', '客户说价格太贵怎么应对？', NULL),
 (8, 'conv-003', 'ASSISTANT',
  '关于价格异议的应对策略：\n\n1. **价值对比法**: 对比系统节省的人力成本和效率提升，通常3-6个月即可回本\n2. **ROI计算**: 帮客户算一笔账——每月节省多少工时、减少多少错误\n3. **分期方案**: 提供按年付费或分期付款选项\n4. **免费试用**: 建议先做POC测试，让团队体验后再决定\n\n关键是要把焦点从"价格"转移到"价值"。',
@@ -435,7 +435,7 @@ INSERT INTO messages (id, conversation_id, role, content, sources) VALUES
 -- =====================================================
 -- 7. 操作日志（示例）
 -- =====================================================
-INSERT INTO operation_logs (user_id, module, action, method, url, ip, execution_time) VALUES
+INSERT INTO kb_operation_logs (user_id, module, action, method, url, ip, execution_time) VALUES
 (1, 'auth',    'login',    'POST', '/api/v1/auth/login',          '127.0.0.1', 120),
 (1, 'document','create',   'POST', '/api/v1/documents',            '127.0.0.1', 85),
 (2, 'document','update',   'PUT',  '/api/v1/documents/1',          '127.0.0.1', 95),
@@ -445,7 +445,7 @@ INSERT INTO operation_logs (user_id, module, action, method, url, ip, execution_
 -- =====================================================
 -- 8. 点赞数据
 -- =====================================================
-INSERT INTO likes (user_id, target_type, target_id) VALUES
+INSERT INTO kb_likes (user_id, target_type, target_id) VALUES
 (3, 'DOCUMENT', 1),
 (3, 'DOCUMENT', 2),
 (2, 'DOCUMENT', 3);

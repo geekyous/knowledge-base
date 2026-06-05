@@ -43,7 +43,7 @@ import java.util.Optional;
  *       自动扫描注册。但加上 {@code @Repository} 是好习惯，增加可读性。</li>
  * </ul>
  *
- * @author Knowledge Base Team
+ * @author Geekyous Guo
  * @since 1.0.0
  * @see JpaRepository
  * @see User

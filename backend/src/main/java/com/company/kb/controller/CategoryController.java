@@ -3,6 +3,8 @@ package com.company.kb.controller;
 import com.company.kb.dto.ApiResponse;
 import com.company.kb.entity.Category;
 import com.company.kb.repository.CategoryRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -56,13 +58,14 @@ import java.util.List;
  *       虽然实际只返回根节点，但 "/tree" 清楚地表达了客户端的意图。</li>
  * </ul>
  *
- * @author Knowledge Base Team
+ * @author Geekyous Guo
  * @since 1.0.0
  * @see CategoryRepository
  * @see Category
  */
 @RestController
 @RequestMapping("/api/v1/categories")
+@Tag(name = "分类管理", description = "文档分类的查询和树形结构接口")
 public class CategoryController {
 
     /** 分类 Repository — 直接注入，跳过 Service 层 */
@@ -86,6 +89,7 @@ public class CategoryController {
      * @return 所有分类的列表
      */
     @GetMapping
+    @Operation(summary = "获取所有分类", description = "返回平铺列表形式的全部分类")
     public ApiResponse<List<Category>> list() {
         return ApiResponse.success(categoryRepository.findAll());
     }
@@ -104,6 +108,7 @@ public class CategoryController {
      * @return 顶层分类列表（parent 为 null 的记录）
      */
     @GetMapping("/tree")
+    @Operation(summary = "获取分类树", description = "返回顶层分类（根节点），前端可按需加载子节点")
     public ApiResponse<List<Category>> tree() {
         // 查询所有 parent_id 为 NULL 的分类，即顶层分类（树的根节点）
         List<Category> roots = categoryRepository.findByParentIdIsNull();
@@ -117,6 +122,7 @@ public class CategoryController {
      * @return 分类详情。如果不存在，data 为 null
      */
     @GetMapping("/{id}")
+    @Operation(summary = "获取分类详情", description = "根据 ID 获取单个分类信息")
     public ApiResponse<Category> get(@PathVariable Long id) {
         // orElse(null): 如果分类不存在，返回 null（而非抛异常）
         // 配合 @JsonInclude(NON_NULL)，data 字段在 JSON 中会被省略
@@ -133,6 +139,7 @@ public class CategoryController {
      * @return 该分类下的直接子分类列表
      */
     @GetMapping("/{id}/children")
+    @Operation(summary = "获取子分类列表", description = "根据父分类 ID 获取其直接子分类")
     public ApiResponse<List<Category>> children(@PathVariable Long id) {
         return ApiResponse.success(categoryRepository.findByParentId(id));
     }

@@ -57,7 +57,7 @@ import java.util.ArrayList;
  *       表示不使用基于权限的细粒度授权（本项目基于角色而非权限）。</li>
  * </ul>
  *
- * @author Knowledge Base Team
+ * @author Geekyous Guo
  * @since 1.0.0
  * @see OncePerRequestFilter
  * @see JwtConfig
