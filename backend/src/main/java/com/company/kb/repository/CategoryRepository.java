@@ -42,7 +42,7 @@ import java.util.Optional;
  *       不需要分页。文档等大量数据才需要 {@code Page<T>} 返回值。</li>
  * </ul>
  *
- * @author Knowledge Base Team
+ * @author Geekyous Guo
  * @since 1.0.0
  * @see JpaRepository
  * @see Category

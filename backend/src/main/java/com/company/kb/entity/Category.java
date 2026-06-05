@@ -47,12 +47,12 @@ import java.time.LocalDateTime;
  *   <li><b>sortOrder 字段</b>: 控制同级分类的显示顺序，数值越小越靠前。</li>
  * </ul>
  *
- * @author Knowledge Base Team
+ * @author Geekyous Guo
  * @since 1.0.0
  * @see com.company.kb.repository.CategoryRepository
  */
 @Entity
-@Table(name = "categories")
+@Table(name = "kb_categories")
 @EntityListeners(AuditingEntityListener.class)
 @Data
 @Builder

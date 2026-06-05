@@ -49,7 +49,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
  *       只有当某个类存在于 classpath 时才生效</li>
  * </ul>
  *
- * @author Knowledge Base Team
+ * @author Geekyous Guo
  * @since 1.0.0
  * @see SpringBootApplication
  * @see EnableJpaAuditing

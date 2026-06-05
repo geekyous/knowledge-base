@@ -61,7 +61,7 @@ import java.util.Map;
  *       过期后需要重新登录。短期 Token + Refresh Token 是更安全的方案。</li>
  * </ul>
  *
- * @author Knowledge Base Team
+ * @author Geekyous Guo
  * @since 1.0.0
  * @see JwtAuthenticationFilter
  * @see com.company.kb.service.AuthService

@@ -1,6 +1,8 @@
 package com.company.kb.controller;
 
 import com.company.kb.dto.ApiResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -59,10 +61,11 @@ import java.util.Map;
  *       就失去了"快速判断应用状态"的意义。</li>
  * </ul>
  *
- * @author Knowledge Base Team
+ * @author Geekyous Guo
  * @since 1.0.0
  */
 @RestController
+@Tag(name = "健康检查", description = "应用运行状态探测接口")
 public class HealthController {
 
     /**
@@ -77,6 +80,7 @@ public class HealthController {
      * @return 包含状态的 Map（会被 Jackson 序列化为 JSON）
      */
     @GetMapping("/actuator/health")
+    @Operation(summary = "Actuator 健康检查", description = "兼容 Spring Boot Actuator 标准路径，返回 {\"status\": \"UP\"}")
     public Map<String, Object> health() {
         // Map.of("key", "value") 创建不可变的单元素 Map
         // 在生产环境中，这里应该检查数据库连接、Redis 等依赖服务的状态
@@ -104,6 +108,7 @@ public class HealthController {
      * @return 标准格式的健康状态响应
      */
     @GetMapping("/api/v1/health")
+    @Operation(summary = "API 健康检查", description = "返回标准 ApiResponse 格式的健康状态，包含服务名称")
     public ApiResponse<Map<String, String>> apiHealth() {
         return ApiResponse.success(Map.of("status", "UP", "service", "knowledge-base"));
     }

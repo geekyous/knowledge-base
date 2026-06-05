@@ -44,7 +44,7 @@ import org.springframework.stereotype.Service;
  *       Spring 会自动使用它进行注入，无需 {@code @Autowired} 注解。</li>
  * </ul>
  *
- * @author Knowledge Base Team
+ * @author Geekyous Guo
  * @since 1.0.0
  * @see com.company.kb.controller.AuthController
  * @see JwtConfig

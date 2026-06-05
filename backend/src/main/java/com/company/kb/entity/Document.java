@@ -44,13 +44,13 @@ import java.time.LocalDateTime;
  *       但在高并发场景下直接 COUNT 性能差。将这些数值冗余存储在主表中是一种常见的优化手段。</li>
  * </ul>
  *
- * @author Knowledge Base Team
+ * @author Geekyous Guo
  * @since 1.0.0
  * @see User
  * @see com.company.kb.repository.DocumentRepository
  */
 @Entity
-@Table(name = "documents")
+@Table(name = "kb_documents")
 @EntityListeners(AuditingEntityListener.class)
 @Data
 @Builder

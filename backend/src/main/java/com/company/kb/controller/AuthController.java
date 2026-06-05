@@ -4,6 +4,8 @@ import com.company.kb.dto.ApiResponse;
 import com.company.kb.dto.LoginRequest;
 import com.company.kb.dto.LoginResponse;
 import com.company.kb.service.AuthService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -56,7 +58,7 @@ import org.springframework.web.bind.annotation.*;
  *       可能被浏览器历史记录、日志、代理服务器记录，存在安全风险。</li>
  * </ul>
  *
- * @author Knowledge Base Team
+ * @author Geekyous Guo
  * @since 1.0.0
  * @see AuthService
  * @see LoginRequest
@@ -64,6 +66,7 @@ import org.springframework.web.bind.annotation.*;
  */
 @RestController
 @RequestMapping("/api/v1/auth")
+@Tag(name = "认证管理", description = "用户登录、登出等认证相关接口")
 public class AuthController {
 
     /** 认证服务 — 处理登录业务逻辑 */
@@ -108,6 +111,7 @@ public class AuthController {
      * @return 统一响应包装的登录结果
      */
     @PostMapping("/login")
+    @Operation(summary = "用户登录", description = "验证用户名和密码，返回 JWT Token 和用户信息")
     public ApiResponse<LoginResponse> login(@RequestBody LoginRequest request) {
         // 委托给 AuthService 处理登录逻辑，将结果包装为统一响应格式
         return ApiResponse.success(authService.login(request));
@@ -126,6 +130,7 @@ public class AuthController {
      * @return 登出成功提示
      */
     @PostMapping("/logout")
+    @Operation(summary = "用户登出", description = "客户端丢弃 Token 即可实现登出，本接口为语义补充")
     public ApiResponse<Void> logout() {
         return ApiResponse.success("退出登录成功", null);
     }

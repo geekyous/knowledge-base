@@ -53,7 +53,7 @@ import java.util.List;
  * </ul>
  *
  * @param <T> 响应数据的泛型类型
- * @author Knowledge Base Team
+ * @author Geekyous Guo
  * @since 1.0.0
  * @see com.company.kb.dto.ApiResponse
  * @see HttpStatus
@@ -225,7 +225,7 @@ public class Response<T> {
      * @return 状态码 400，消息 "参数校验失败"，携带错误列表的响应
      */
     public static <T> Response<T> validationFailed(List<String> errors) {
-        return new Response<>(HttpStatus.BAD_REQUEST.value(), "参数校验失败", errors);
+        return new Response<T>(HttpStatus.BAD_REQUEST.value(), "参数校验失败", (T) errors);
     }
 
     /**

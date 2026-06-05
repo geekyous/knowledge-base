@@ -3,6 +3,8 @@ package com.company.kb.controller;
 import com.company.kb.dto.ApiResponse;
 import com.company.kb.entity.Document;
 import com.company.kb.service.DocumentService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
@@ -49,13 +51,14 @@ import java.util.Map;
  *       内容列表、总页数、总记录数、当前页码、是否首页/末页等。</li>
  * </ul>
  *
- * @author Knowledge Base Team
+ * @author Geekyous Guo
  * @since 1.0.0
  * @see DocumentService
  * @see Document
  */
 @RestController
 @RequestMapping("/api/v1/documents")
+@Tag(name = "文档管理", description = "文档的增删改查、精选文档、热门文档等接口")
 public class DocumentController {
 
     /** 文档服务层 — 处理业务逻辑 */
@@ -88,6 +91,7 @@ public class DocumentController {
      * @return 分页文档列表
      */
     @GetMapping
+    @Operation(summary = "获取文档列表", description = "支持分页、关键词搜索、分类过滤、状态过滤")
     public ApiResponse<Page<Document>> list(
             @RequestParam(defaultValue = "1") int page,      // 页码，默认第 1 页
             @RequestParam(defaultValue = "20") int size,      // 每页大小，默认 20 条
@@ -107,6 +111,7 @@ public class DocumentController {
      * @return 文档详情
      */
     @GetMapping("/{id}")
+    @Operation(summary = "获取文档详情", description = "根据文档 ID 获取完整的文档内容")
     public ApiResponse<Document> get(@PathVariable Long id) {
         return ApiResponse.success(documentService.getDocument(id));
     }
@@ -129,6 +134,7 @@ public class DocumentController {
      * @return 创建成功的文档（包含自动生成的 ID）
      */
     @PostMapping
+    @Operation(summary = "创建文档", description = "提交 JSON 创建新文档，返回包含自动生成 ID 的文档对象")
     public ApiResponse<Document> create(@RequestBody Document document) {
         return ApiResponse.success("创建成功", documentService.createDocument(document));
     }
@@ -145,6 +151,7 @@ public class DocumentController {
      * @return 更新后的完整文档
      */
     @PutMapping("/{id}")
+    @Operation(summary = "更新文档", description = "根据 ID 更新文档内容，支持部分更新（只更新非 null 字段）")
     public ApiResponse<Document> update(@PathVariable Long id, @RequestBody Document document) {
         return ApiResponse.success("更新成功", documentService.updateDocument(id, document));
     }
@@ -159,6 +166,7 @@ public class DocumentController {
      * @return 删除成功提示
      */
     @DeleteMapping("/{id}")
+    @Operation(summary = "删除文档", description = "根据 ID 软删除文档（设置 deletedAt 时间戳）")
     public ApiResponse<Void> delete(@PathVariable Long id) {
         documentService.deleteDocument(id);
         return ApiResponse.success("删除成功", null);
@@ -175,6 +183,7 @@ public class DocumentController {
      * @return 精选文档分页列表
      */
     @GetMapping("/featured")
+    @Operation(summary = "获取精选文档", description = "获取标记为精选/推荐的文档列表")
     public ApiResponse<Page<Document>> featured(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size) {
@@ -189,6 +198,7 @@ public class DocumentController {
      * @return 热门文档分页列表
      */
     @GetMapping("/popular")
+    @Operation(summary = "获取热门文档", description = "按浏览量降序获取热门文档列表")
     public ApiResponse<Page<Document>> popular(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size) {

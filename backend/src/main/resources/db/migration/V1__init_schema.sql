@@ -8,10 +8,10 @@ SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- =====================================================
--- 1. 用户表 (users)
+-- 1. 用户表 (kb_users)
 -- =====================================================
-DROP TABLE IF EXISTS users;
-CREATE TABLE users (
+DROP TABLE IF EXISTS kb_users;
+CREATE TABLE kb_users (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '用户ID',
     username VARCHAR(50) NOT NULL UNIQUE COMMENT '用户名',
     password VARCHAR(255) NOT NULL COMMENT '密码（加密）',
@@ -32,10 +32,10 @@ CREATE TABLE users (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户表';
 
 -- =====================================================
--- 2. 角色表 (roles)
+-- 2. 角色表 (kb_roles)
 -- =====================================================
-DROP TABLE IF EXISTS roles;
-CREATE TABLE roles (
+DROP TABLE IF EXISTS kb_roles;
+CREATE TABLE kb_roles (
     id INT PRIMARY KEY AUTO_INCREMENT COMMENT '角色ID',
     name VARCHAR(50) NOT NULL UNIQUE COMMENT '角色名称',
     description VARCHAR(255) COMMENT '角色描述',
@@ -46,10 +46,10 @@ CREATE TABLE roles (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='角色表';
 
 -- =====================================================
--- 3. 分类表 (categories)
+-- 3. 分类表 (kb_categories)
 -- =====================================================
-DROP TABLE IF EXISTS categories;
-CREATE TABLE categories (
+DROP TABLE IF EXISTS kb_categories;
+CREATE TABLE kb_categories (
     id INT PRIMARY KEY AUTO_INCREMENT COMMENT '分类ID',
     name VARCHAR(50) NOT NULL COMMENT '分类名称',
     slug VARCHAR(50) NOT NULL UNIQUE COMMENT '分类标识',
@@ -61,17 +61,17 @@ CREATE TABLE categories (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
 
-    FOREIGN KEY (parent_id) REFERENCES categories(id) ON DELETE SET NULL,
+    FOREIGN KEY (parent_id) REFERENCES kb_categories(id) ON DELETE SET NULL,
     INDEX idx_parent_id (parent_id),
     INDEX idx_slug (slug),
     INDEX idx_status (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='分类表';
 
 -- =====================================================
--- 4. 文档表 (documents)
+-- 4. 文档表 (kb_documents)
 -- =====================================================
-DROP TABLE IF EXISTS documents;
-CREATE TABLE documents (
+DROP TABLE IF EXISTS kb_documents;
+CREATE TABLE kb_documents (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '文档ID',
     title VARCHAR(255) NOT NULL COMMENT '文档标题',
     summary VARCHAR(500) COMMENT '文档摘要',
@@ -88,8 +88,8 @@ CREATE TABLE documents (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     deleted_at TIMESTAMP NULL COMMENT '删除时间（软删除）',
 
-    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL,
-    FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (category_id) REFERENCES kb_categories(id) ON DELETE SET NULL,
+    FOREIGN KEY (author_id) REFERENCES kb_users(id) ON DELETE CASCADE,
     INDEX idx_category_id (category_id),
     INDEX idx_author_id (author_id),
     INDEX idx_status (status),
@@ -99,10 +99,10 @@ CREATE TABLE documents (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='文档表';
 
 -- =====================================================
--- 5. 标签表 (tags)
+-- 5. 标签表 (kb_tags)
 -- =====================================================
-DROP TABLE IF EXISTS tags;
-CREATE TABLE tags (
+DROP TABLE IF EXISTS kb_tags;
+CREATE TABLE kb_tags (
     id INT PRIMARY KEY AUTO_INCREMENT COMMENT '标签ID',
     name VARCHAR(50) NOT NULL UNIQUE COMMENT '标签名称',
     color VARCHAR(7) COMMENT '标签颜色',
@@ -114,26 +114,26 @@ CREATE TABLE tags (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='标签表';
 
 -- =====================================================
--- 6. 文档标签关联表 (document_tags)
+-- 6. 文档标签关联表 (kb_document_tags)
 -- =====================================================
-DROP TABLE IF EXISTS document_tags;
-CREATE TABLE document_tags (
+DROP TABLE IF EXISTS kb_document_tags;
+CREATE TABLE kb_document_tags (
     document_id BIGINT NOT NULL COMMENT '文档ID',
     tag_id INT NOT NULL COMMENT '标签ID',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
 
     PRIMARY KEY (document_id, tag_id),
-    FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE,
-    FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE,
+    FOREIGN KEY (document_id) REFERENCES kb_documents(id) ON DELETE CASCADE,
+    FOREIGN KEY (tag_id) REFERENCES kb_tags(id) ON DELETE CASCADE,
     INDEX idx_document_id (document_id),
     INDEX idx_tag_id (tag_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='文档标签关联表';
 
 -- =====================================================
--- 7. 文档版本表 (document_versions)
+-- 7. 文档版本表 (kb_document_versions)
 -- =====================================================
-DROP TABLE IF EXISTS document_versions;
-CREATE TABLE document_versions (
+DROP TABLE IF EXISTS kb_document_versions;
+CREATE TABLE kb_document_versions (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '版本ID',
     document_id BIGINT NOT NULL COMMENT '文档ID',
     version_number INT NOT NULL COMMENT '版本号',
@@ -143,17 +143,17 @@ CREATE TABLE document_versions (
     created_by BIGINT NOT NULL COMMENT '创建人ID',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
 
-    FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE,
-    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (document_id) REFERENCES kb_documents(id) ON DELETE CASCADE,
+    FOREIGN KEY (created_by) REFERENCES kb_users(id) ON DELETE CASCADE,
     INDEX idx_document_id (document_id),
     INDEX idx_version_number (version_number)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='文档版本表';
 
 -- =====================================================
--- 8. 对话表 (conversations)
+-- 8. 对话表 (kb_conversations)
 -- =====================================================
-DROP TABLE IF EXISTS conversations;
-CREATE TABLE conversations (
+DROP TABLE IF EXISTS kb_conversations;
+CREATE TABLE kb_conversations (
     id VARCHAR(50) PRIMARY KEY COMMENT '对话ID',
     user_id BIGINT NOT NULL COMMENT '用户ID',
     title VARCHAR(255) COMMENT '对话标题',
@@ -161,16 +161,16 @@ CREATE TABLE conversations (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
 
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES kb_users(id) ON DELETE CASCADE,
     INDEX idx_user_id (user_id),
     INDEX idx_updated_at (updated_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='对话表';
 
 -- =====================================================
--- 9. 消息表 (messages)
+-- 9. 消息表 (kb_messages)
 -- =====================================================
-DROP TABLE IF EXISTS messages;
-CREATE TABLE messages (
+DROP TABLE IF EXISTS kb_messages;
+CREATE TABLE kb_messages (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '消息ID',
     conversation_id VARCHAR(50) NOT NULL COMMENT '对话ID',
     role ENUM('USER', 'ASSISTANT') NOT NULL COMMENT '角色',
@@ -178,16 +178,16 @@ CREATE TABLE messages (
     sources JSON COMMENT '来源文档',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
 
-    FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE,
+    FOREIGN KEY (conversation_id) REFERENCES kb_conversations(id) ON DELETE CASCADE,
     INDEX idx_conversation_id (conversation_id),
     INDEX idx_created_at (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='消息表';
 
 -- =====================================================
--- 10. 附件表 (attachments)
+-- 10. 附件表 (kb_attachments)
 -- =====================================================
-DROP TABLE IF EXISTS attachments;
-CREATE TABLE attachments (
+DROP TABLE IF EXISTS kb_attachments;
+CREATE TABLE kb_attachments (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '附件ID',
     document_id BIGINT COMMENT '文档ID',
     file_name VARCHAR(255) NOT NULL COMMENT '文件名',
@@ -197,17 +197,17 @@ CREATE TABLE attachments (
     upload_user_id BIGINT NOT NULL COMMENT '上传人ID',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
 
-    FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE SET NULL,
-    FOREIGN KEY (upload_user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (document_id) REFERENCES kb_documents(id) ON DELETE SET NULL,
+    FOREIGN KEY (upload_user_id) REFERENCES kb_users(id) ON DELETE CASCADE,
     INDEX idx_document_id (document_id),
     INDEX idx_upload_user_id (upload_user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='附件表';
 
 -- =====================================================
--- 11. 操作日志表 (operation_logs)
+-- 11. 操作日志表 (kb_operation_logs)
 -- =====================================================
-DROP TABLE IF EXISTS operation_logs;
-CREATE TABLE operation_logs (
+DROP TABLE IF EXISTS kb_operation_logs;
+CREATE TABLE kb_operation_logs (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '日志ID',
     user_id BIGINT COMMENT '用户ID',
     module VARCHAR(50) NOT NULL COMMENT '模块',
@@ -221,7 +221,7 @@ CREATE TABLE operation_logs (
     execution_time INT COMMENT '执行时间(ms)',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
 
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (user_id) REFERENCES kb_users(id) ON DELETE SET NULL,
     INDEX idx_user_id (user_id),
     INDEX idx_module (module),
     INDEX idx_action (action),
@@ -229,17 +229,17 @@ CREATE TABLE operation_logs (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='操作日志表';
 
 -- =====================================================
--- 12. 点赞表 (likes)
+-- 12. 点赞表 (kb_likes)
 -- =====================================================
-DROP TABLE IF EXISTS likes;
-CREATE TABLE likes (
+DROP TABLE IF EXISTS kb_likes;
+CREATE TABLE kb_likes (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '点赞ID',
     user_id BIGINT NOT NULL COMMENT '用户ID',
     target_type ENUM('DOCUMENT', 'COMMENT', 'ANSWER') NOT NULL COMMENT '目标类型',
     target_id BIGINT NOT NULL COMMENT '目标ID',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
 
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES kb_users(id) ON DELETE CASCADE,
     UNIQUE KEY uk_user_target (user_id, target_type, target_id),
     INDEX idx_target (target_type, target_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='点赞表';
@@ -252,7 +252,7 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- =====================================================
 -- 插入初始角色数据
 -- =====================================================
-INSERT INTO roles (id, name, description, permissions) VALUES
+INSERT INTO kb_roles (id, name, description, permissions) VALUES
 (1, 'USER', '普通用户', '["read:document", "search:document", "chat:ask", "profile:update"]'),
 (2, 'EDITOR', '编辑人员', '["read:document", "search:document", "chat:ask", "profile:update", "create:document", "edit:document", "delete:document"]'),
 (3, 'ADMIN', '系统管理员', '["*"]');
