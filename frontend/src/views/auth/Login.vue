@@ -136,35 +136,33 @@
 </template>
 
 <script setup lang="ts">
-<!--
-  导入说明：
-  - reactive: 创建响应式对象（适合包含多个字段的表单数据）
-  - ref: 创建响应式引用（适合基本类型值，如 boolean、string）
--->
+// 导入说明：
+// - reactive: 创建响应式对象（适合包含多个字段的表单数据）
+// - ref: 创建响应式引用（适合基本类型值，如 boolean、string）
 import { reactive, ref } from 'vue'
 
-<!-- 导入路由 API -->
+// 导入路由 API
 import { useRouter, useRoute } from 'vue-router'
 
-<!-- 导入用户状态 store -->
+// 导入用户状态 store
 import { useUserStore } from '@/stores/user'
 
-<!-- 导入 Element Plus 的消息提示组件 -->
+// 导入 Element Plus 的消息提示组件
 import { ElMessage } from 'element-plus'
 
-<!-- 导入表单相关的 TypeScript 类型 -->
-<!-- FormInstance: 表单组件实例的类型（用于 ref 类型标注） -->
-<!-- FormRules: 验证规则的类型 -->
+// 导入表单相关的 TypeScript 类型
+// FormInstance: 表单组件实例的类型（用于 ref 类型标注）
+// FormRules: 验证规则的类型
 import type { FormInstance, FormRules } from 'element-plus'
 
-<!-- 导入页面中使用的图标 -->
+// 导入页面中使用的图标
 import { Reading, User, Lock, Platform, ChatDotRound } from '@element-plus/icons-vue'
 
-<!-- 获取路由实例和当前路由信息 -->
+// 获取路由实例和当前路由信息
 const router = useRouter()
 const route = useRoute()
 
-<!-- 获取用户状态 store -->
+// 获取用户状态 store
 const userStore = useUserStore()
 
 /**

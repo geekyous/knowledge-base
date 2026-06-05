@@ -194,29 +194,29 @@
 </template>
 
 <script setup lang="ts">
-<!-- 导入 Vue 响应式 API 和生命周期钩子 -->
+// 导入 Vue 响应式 API 和生命周期钩子
 import { ref, onMounted } from 'vue'
 
-<!-- 导入路由 API：读取 URL 参数和进行页面跳转 -->
+// 导入路由 API：读取 URL 参数和进行页面跳转
 import { useRouter, useRoute } from 'vue-router'
 
-<!-- 导入 Element Plus 消息提示 -->
+// 导入 Element Plus 消息提示
 import { ElMessage } from 'element-plus'
 
-<!-- 导入图标（使用 as 重命名避免与组件名冲突） -->
+// 导入图标（使用 as 重命名避免与组件名冲突）
 import { Search as SearchIcon, User as UserIcon, View } from '@element-plus/icons-vue'
 
-<!-- 导入搜索 API -->
+// 导入搜索 API
 import { searchApi } from '@/api/search'
 
-<!-- 导入搜索结果类型 -->
+// 导入搜索结果类型
 import type { SearchResult } from '@/types'
 
-<!-- 路由实例 -->
+// 路由实例
 const router = useRouter()
 const route = useRoute()
 
-<!-- ==================== 响应式状态 ==================== -->
+// ==================== 响应式状态 ====================
 
 /** 搜索关键词 */
 const keyword = ref('')

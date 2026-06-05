@@ -189,10 +189,10 @@
 </template>
 
 <script setup lang="ts">
-<!-- 导入 Vue 响应式 API -->
+// 导入 Vue 响应式 API
 import { ref, computed } from 'vue'
 
-<!-- 导入图标 -->
+// 导入图标
 import {
   UserFilled,
   Document,
@@ -200,10 +200,10 @@ import {
   Star
 } from '@element-plus/icons-vue'
 
-<!-- 导入用户状态 store -->
+// 导入用户状态 store
 import { useUserStore } from '@/stores/user'
 
-<!-- 获取 store 实例 -->
+// 获取 store 实例
 const userStore = useUserStore()
 
 /** 当前激活的标签页名称（对应 el-tab-pane 的 name 属性） */

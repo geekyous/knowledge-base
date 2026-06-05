@@ -238,10 +238,10 @@
 </template>
 
 <script setup lang="ts">
-<!-- 导入 Vue API -->
+// 导入 Vue API
 import { ref, onMounted } from 'vue'
 
-<!-- 导入图标 -->
+// 导入图标
 import {
   Document,
   User,
@@ -251,10 +251,10 @@ import {
   DataLine
 } from '@element-plus/icons-vue'
 
-<!-- 导入文档 API -->
+// 导入文档 API
 import { documentApi } from '@/api/document'
 
-<!-- ==================== 统计数据（Mock） ==================== -->
+// ==================== 统计数据（Mock） ====================
 /** 系统统计数据 */
 const stats = ref({
   totalDocuments: 1256,
@@ -263,7 +263,7 @@ const stats = ref({
   accuracyRate: 94.7
 })
 
-<!-- ==================== 最近文档（Mock） ==================== -->
+// ==================== 最近文档（Mock） ====================
 /** 最近文档表格数据 */
 const recentDocuments = ref([
   { id: 1, title: '员工手册 (2025版)', author: 'HR部门', status: 'PUBLISHED', viewCount: 1234, createdAt: '06-01' },
@@ -273,7 +273,7 @@ const recentDocuments = ref([
   { id: 5, title: '新员工入职指南', author: 'HR部门', status: 'PUBLISHED', viewCount: 2380, createdAt: '05-20' }
 ])
 
-<!-- ==================== 待审核文档（Mock） ==================== -->
+// ==================== 待审核文档（Mock） ====================
 /** 待审核文档列表 */
 const pendingDocs = ref([
   { id: 101, title: 'API 接口设计规范', author: '架构组', createdAt: '05-31' },

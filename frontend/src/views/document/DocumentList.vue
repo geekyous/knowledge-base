@@ -207,13 +207,13 @@
 </template>
 
 <script setup lang="ts">
-<!-- 导入 Vue API -->
+// 导入 Vue API
 import { ref, reactive, onMounted } from 'vue'
 
-<!-- 导入路由 API -->
+// 导入路由 API
 import { useRouter, useRoute } from 'vue-router'
 
-<!-- 导入图标 -->
+// 导入图标
 import {
   Search,
   Star,
@@ -223,17 +223,17 @@ import {
   Calendar
 } from '@element-plus/icons-vue'
 
-<!-- 导入文档 API -->
+// 导入文档 API
 import { documentApi } from '@/api/document'
 
-<!-- 导入文档类型 -->
+// 导入文档类型
 import type { Document } from '@/types'
 
-<!-- 路由实例 -->
+// 路由实例
 const router = useRouter()
 const route = useRoute()
 
-<!-- ==================== 响应式状态 ==================== -->
+// ==================== 响应式状态 ====================
 
 /** 加载状态 */
 const loading = ref(false)

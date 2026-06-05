@@ -1,0 +1,55 @@
+/*
+================================================================================
+全局样式 - assets/styles/main.css
+================================================================================
+
+【文件说明】
+应用的全局通用样式，定义基础样式变量和通用工具类。
+================================================================================
+*/
+
+/* 滚动条美化 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c0c4cc;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #909399;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* 链接默认样式 */
+a {
+  color: #409eff;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* 选中文字颜色 */
+::selection {
+  background-color: #409eff;
+  color: #fff;
+}
+
+/* 过渡动画 */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}

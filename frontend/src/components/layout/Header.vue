@@ -125,22 +125,22 @@
 </template>
 
 <script setup lang="ts">
-<!-- 导入 Vue 的计算属性 API -->
+// 导入 Vue 的计算属性 API
 import { computed } from 'vue'
 
-<!-- 导入 Vue Router 的组合式 API -->
-<!-- useRouter: 获取路由实例（用于编程式导航） -->
-<!-- useRoute: 获取当前路由信息（路径、参数、查询参数等） -->
+// 导入 Vue Router 的组合式 API
+// useRouter: 获取路由实例（用于编程式导航）
+// useRoute: 获取当前路由信息（路径、参数、查询参数等）
 import { useRouter, useRoute } from 'vue-router'
 
-<!-- 导入用户状态 store，用于获取登录状态和用户信息 -->
+// 导入用户状态 store，用于获取登录状态和用户信息
 import { useUserStore } from '@/stores/user'
 
-<!-- 导入 Element Plus 的消息提示和确认弹窗组件 -->
+// 导入 Element Plus 的消息提示和确认弹窗组件
 import { ElMessage, ElMessageBox } from 'element-plus'
 
-<!-- 导入 Element Plus 图标组件 -->
-<!-- 注意：虽然图标已在 main.ts 全局注册，这里显式导入是为了在 JS 中引用（如 :icon="Bell"） -->
+// 导入 Element Plus 图标组件
+// 注意：虽然图标已在 main.ts 全局注册，这里显式导入是为了在 JS 中引用（如 :icon="Bell"）
 import {
   Reading,
   Bell,
@@ -150,11 +150,11 @@ import {
   ArrowDown
 } from '@element-plus/icons-vue'
 
-<!-- 获取路由实例和当前路由信息 -->
+// 获取路由实例和当前路由信息
 const router = useRouter()
 const route = useRoute()
 
-<!-- 获取用户状态 store 实例 -->
+// 获取用户状态 store 实例
 const userStore = useUserStore()
 
 /**
@@ -193,25 +193,25 @@ const handleCommand = async (command: string) => {
       router.push('/profile')
       break
     case 'settings':
-      <!-- 跳转到个人中心并带上 tab 参数，Profile 组件会读取 query.tab 切换标签页 -->
+      // 跳转到个人中心并带上 tab 参数，Profile 组件会读取 query.tab 切换标签页
       router.push('/profile?tab=settings')
       break
     case 'logout':
       try {
-        <!-- ElMessageBox.confirm() 显示确认对话框，返回 Promise -->
-        <!-- 用户点击"确定"→ Promise resolve；点击"取消"→ Promise reject -->
+        // ElMessageBox.confirm() 显示确认对话框，返回 Promise
+        // 用户点击"确定"→ Promise resolve；点击"取消"→ Promise reject
         await ElMessageBox.confirm('确定要退出登录吗？', '提示', {
           confirmButtonText: '确定',
           cancelButtonText: '取消',
           type: 'warning'
         })
-        <!-- 用户确认后执行登出 -->
+        // 用户确认后执行登出
         userStore.logout()
         router.push('/login')
         ElMessage.success('已退出登录')
       } catch {
-        <!-- 用户取消操作，不需要做任何处理 -->
-        <!-- catch 块捕获的是 ElMessageBox 的 reject（用户取消） -->
+        // 用户取消操作，不需要做任何处理
+        // catch 块捕获的是 ElMessageBox 的 reject（用户取消）
       }
       break
   }
@@ -219,10 +219,8 @@ const handleCommand = async (command: string) => {
 </script>
 
 <style scoped lang="scss">
-<!--
-  scoped: 样式只作用于当前组件，不会影响其他组件
-  lang="scss": 使用 SCSS 预处理器，支持嵌套、变量等特性
--->
+/* scoped: 样式只作用于当前组件，不会影响其他组件 */
+/* lang="scss": 使用 SCSS 预处理器，支持嵌套、变量等特性 */
 
 /* 头部容器：固定高度 60px，白色背景，底部边框分隔 */
 .app-header {

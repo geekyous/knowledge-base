@@ -43,29 +43,25 @@
 </template>
 
 <script setup lang="ts">
-<!--
-  <script setup lang="ts"> 说明：
-  - setup: Vue 3 Composition API 的编译期语法糖，无需手动 return 变量
-  - lang="ts": 启用 TypeScript 支持，可以获得类型检查和智能提示
--->
+// <script setup lang="ts"> 说明：
+// - setup: Vue 3 Composition API 的编译期语法糖，无需手动 return 变量
+// - lang="ts": 启用 TypeScript 支持，可以获得类型检查和智能提示
 
-<!-- ref() 是 Vue 3 中创建响应式数据的基本方法 -->
+// ref() 是 Vue 3 中创建响应式数据的基本方法
 import { ref } from 'vue'
 
-<!-- 导入 Element Plus 的中文语言包，使组件显示中文（默认是英文） -->
+// 导入 Element Plus 的中文语言包，使组件显示中文（默认是英文）
 import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
 
-<!-- 使用 ref() 创建响应式的语言配置 -->
-<!-- ref() 返回一个包含 .value 属性的响应式引用对象 -->
-<!-- 当 locale.value 改变时，模板中引用它的地方会自动更新 -->
+// 使用 ref() 创建响应式的语言配置
+// ref() 返回一个包含 .value 属性的响应式引用对象
+// 当 locale.value 改变时，模板中引用它的地方会自动更新
 const locale = ref(zhCn)
 </script>
 
 <style>
-<!--
-  注意：这里的 <style> 没有 scoped 属性，说明这些样式是全局的
-  全局样式会影响所有组件，适合定义基础样式重置（CSS Reset）
--->
+/* 注意：这里的 <style> 没有 scoped 属性，说明这些样式是全局的 */
+/* 全局样式会影响所有组件，适合定义基础样式重置（CSS Reset） */
 
 /* 根应用容器样式：设置字体族和字体渲染优化 */
 /* -webkit-font-smoothing 和 -moz-osx-font-smoothing 让文字在 Retina 屏幕上更清晰 */
