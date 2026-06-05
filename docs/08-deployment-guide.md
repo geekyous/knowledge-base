@@ -182,7 +182,7 @@ services:
 
   # Elasticsearch
   elasticsearch:
-    image: elasticsearch:8.0.0
+    image: elasticsearch:8.19.16
     environment:
       - discovery.type=single-node
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"

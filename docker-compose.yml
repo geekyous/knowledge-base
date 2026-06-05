@@ -128,7 +128,7 @@ services:
 
   # Elasticsearch
   elasticsearch:
-    image: elasticsearch:8.0.0
+    image: elasticsearch:8.19.16
     ports:
       - "9200:9200"
     environment:

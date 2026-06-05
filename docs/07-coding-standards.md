@@ -724,7 +724,7 @@ def test_ask_question():
 /**
  * 文档服务接口
  *
- * @author 张三
+ * @author Geekyous Guo
  * @since 1.0.0
  */
 public interface DocumentService {

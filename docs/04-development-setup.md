@@ -245,7 +245,7 @@ docker run -d \
   -p 9200:9200 \
   -p 9300:9300 \
   -e "discovery.type=single-node" \
-  elasticsearch:8.0.0
+  elasticsearch:8.19.16
 
 # 启动 Qdrant
 docker run -d \
