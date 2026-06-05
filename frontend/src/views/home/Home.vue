@@ -127,35 +127,35 @@
 </template>
 
 <script setup lang="ts">
-<!-- 导入 Vue 响应式 API 和生命周期钩子 -->
+// 导入 Vue 响应式 API 和生命周期钩子
 import { ref, onMounted } from 'vue'
 
-<!-- 导入 Vue Router 的组合式 API -->
+// 导入 Vue Router 的组合式 API
 import { useRouter } from 'vue-router'
 
-<!-- 导入自定义组件 -->
-<!-- SearchBox: 搜索框组件 -->
-<!-- DocumentCard: 文档卡片组件 -->
+// 导入自定义组件
+// SearchBox: 搜索框组件
+// DocumentCard: 文档卡片组件
 import SearchBox from '@/components/common/SearchBox.vue'
 import DocumentCard from '@/components/business/DocumentCard.vue'
 
-<!-- 导入文档 API 模块 -->
+// 导入文档 API 模块
 import { documentApi } from '@/api/document'
 
-<!-- 导入文档类型定义 -->
+// 导入文档类型定义
 import type { Document } from '@/types'
 
-<!-- 导入分类卡片使用的图标 -->
-<!-- 这些图标组件会在动态组件 <component :is="..."> 中使用 -->
+// 导入分类卡片使用的图标
+// 这些图标组件会在动态组件 <component :is="..."> 中使用
 import {
   Briefcase,
-  Laptop,
+  Monitor,
   TrendCharts,
-  Shield,
+  Key,
   Management
 } from '@element-plus/icons-vue'
 
-<!-- 获取路由实例 -->
+// 获取路由实例
 const router = useRouter()
 
 /**
@@ -167,9 +167,9 @@ const router = useRouter()
  */
 const categories = ref([
   { id: 1, name: '人事制度', icon: Briefcase, color: '#409eff', count: 128 },
-  { id: 2, name: '技术文档', icon: Laptop, color: '#67c23a', count: 356 },
+  { id: 2, name: '技术文档', icon: Monitor, color: '#67c23a', count: 356 },
   { id: 3, name: '销售支持', icon: TrendCharts, color: '#e6a23c', count: 89 },
-  { id: 4, name: '合规法务', icon: Shield, color: '#f56c6c', count: 67 }
+  { id: 4, name: '合规法务', icon: Key, color: '#f56c6c', count: 67 }
 ])
 
 /**

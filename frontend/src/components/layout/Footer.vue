@@ -32,8 +32,8 @@
 </template>
 
 <script setup lang="ts">
-<!-- Footer 是一个纯展示型组件，不需要任何脚本逻辑 -->
-<!-- <script setup> 标签仍需保留，因为 Vue SFC 规范要求 -->
+// Footer 是一个纯展示型组件，不需要任何脚本逻辑
+// <script setup> 标签仍需保留，因为 Vue SFC 规范要求
 </script>
 
 <style scoped lang="scss">

@@ -260,21 +260,19 @@
 </template>
 
 <script setup lang="ts">
-<!--
-  导入说明：
-  - ref: 响应式引用
-  - nextTick: DOM 更新后的回调（等待 Vue 完成 DOM 渲染）
-  - onMounted: 生命周期钩子
--->
+// 导入说明：
+// - ref: 响应式引用
+// - nextTick: DOM 更新后的回调（等待 Vue 完成 DOM 渲染）
+// - onMounted: 生命周期钩子
 import { ref, nextTick, onMounted } from 'vue'
 
-<!-- 导入路由 -->
+// 导入路由
 import { useRouter } from 'vue-router'
 
-<!-- 导入 Element Plus 的消息提示和确认弹窗 -->
+// 导入 Element Plus 的消息提示和确认弹窗
 import { ElMessage, ElMessageBox } from 'element-plus'
 
-<!-- 导入图标 -->
+// 导入图标
 import {
   Plus,
   Delete,
@@ -286,13 +284,13 @@ import {
   QuestionFilled
 } from '@element-plus/icons-vue'
 
-<!-- 导入聊天 API -->
+// 导入聊天 API
 import { chatApi } from '@/api/chat'
 
-<!-- 导入来源文档类型 -->
+// 导入来源文档类型
 import type { SourceDocument } from '@/types'
 
-<!-- ==================== 局部类型定义 ==================== -->
+// ==================== 局部类型定义 ====================
 
 /**
  * 对话摘要类型
@@ -323,7 +321,7 @@ interface DisplayMessage {
 
 const router = useRouter()
 
-<!-- ==================== 响应式状态 ==================== -->
+// ==================== 响应式状态 ====================
 
 /** 对话列表 */
 const conversations = ref<ChatConversation[]>([])

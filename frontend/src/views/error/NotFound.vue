@@ -38,7 +38,7 @@ Vue Router 的通配路由（/:pathMatch(.*)*）会匹配并渲染此页面。
 </template>
 
 <script setup lang="ts">
-<!-- 导入首页图标 -->
+// 导入首页图标
 import { HomeFilled } from '@element-plus/icons-vue'
 </script>
 

@@ -171,22 +171,20 @@
 </template>
 
 <script setup lang="ts">
-<!--
-  导入说明：
-  - ref: 响应式引用
-  - computed: 计算属性（缓存计算结果）
-  - onMounted: 生命周期钩子
-  - watch: 侦听器（监听数据变化）
--->
+// 导入说明：
+// - ref: 响应式引用
+// - computed: 计算属性（缓存计算结果）
+// - onMounted: 生命周期钩子
+// - watch: 侦听器（监听数据变化）
 import { ref, computed, onMounted, watch } from 'vue'
 
-<!-- 导入路由 API -->
+// 导入路由 API
 import { useRouter, useRoute } from 'vue-router'
 
-<!-- 导入消息提示 -->
+// 导入消息提示
 import { ElMessage } from 'element-plus'
 
-<!-- 导入图标 -->
+// 导入图标
 import {
   ArrowLeft,
   User,
@@ -196,16 +194,16 @@ import {
   ChatDotRound
 } from '@element-plus/icons-vue'
 
-<!-- 导入文档 API -->
+// 导入文档 API
 import { documentApi } from '@/api/document'
 
-<!-- 导入文档类型 -->
+// 导入文档类型
 import type { Document } from '@/types'
 
 const router = useRouter()
 const route = useRoute()
 
-<!-- ==================== 响应式状态 ==================== -->
+// ==================== 响应式状态 ====================
 
 /** 加载状态：初始为 true（页面打开即开始加载） */
 const loading = ref(true)
@@ -229,21 +227,19 @@ const formatDate = (dateStr: string) => {
   })
 }
 
-/**
- * Markdown → HTML 转换（计算属性）
- *
- * 使用 computed 创建缓存计算属性。
- * 只有 document.value?.content 变化时才重新计算。
- *
- * 注意：这是一个简易的正则替换实现，仅支持基本的 Markdown 语法。
- * 生产环境应该使用 marked.js、markdown-it 等专业库。
- *
- * 正则说明：
- * - /^### (.*$)/gim: 匹配三级标题（### 标题）
- * - /\*\*(.*?)\*\*/gim: 匹配加粗（**文字**）
- * - /\*(.*?)\*/gim: 匹配斜体（*文字*）
- * - /`(.*?)`/gim: 匹配行内代码（`代码`）
- */
+// Markdown → HTML 转换（计算属性）
+//
+// 使用 computed 创建缓存计算属性。
+// 只有 document.value?.content 变化时才重新计算。
+//
+// 注意：这是一个简易的正则替换实现，仅支持基本的 Markdown 语法。
+// 生产环境应该使用 marked.js、markdown-it 等专业库。
+//
+// 正则说明：
+// - /^### (.*$)/gim: 匹配三级标题
+// - /\*\*(.*?)\*\* /gim: 匹配加粗
+// - /\*(.*?)\* /gim: 匹配斜体
+// - /`(.*?)`/gim: 匹配行内代码
 const renderedContent = computed(() => {
   const content = document.value?.content || ''
   if (!content) return '<p style="color: #909399;">暂无内容</p>'

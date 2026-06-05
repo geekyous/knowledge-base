@@ -64,19 +64,19 @@
 </template>
 
 <script setup lang="ts">
-<!-- 导入布局的子组件 -->
-<!-- Header 和 Footer 是当前目录下的兄弟组件 -->
+// 导入布局的子组件
+// Header 和 Footer 是当前目录下的兄弟组件
 import AppHeader from './Header.vue'
 import AppFooter from './Footer.vue'
 
-<!-- 导入 onMounted 生命周期钩子 -->
-<!-- onMounted: 组件挂载到 DOM 后调用，适合执行初始化操作（如 API 请求） -->
+// 导入 onMounted 生命周期钩子
+// onMounted: 组件挂载到 DOM 后调用，适合执行初始化操作（如 API 请求）
 import { onMounted } from 'vue'
 
-<!-- 导入用户状态 store -->
+// 导入用户状态 store
 import { useUserStore } from '@/stores/user'
 
-<!-- 获取用户 store 实例 -->
+// 获取用户 store 实例
 const userStore = useUserStore()
 
 /**
