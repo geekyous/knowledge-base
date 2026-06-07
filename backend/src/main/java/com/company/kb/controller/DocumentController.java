@@ -1,6 +1,5 @@
 package com.company.kb.controller;
 
-import com.company.kb.dto.ApiResponse;
 import com.company.kb.dto.request.CreateDocumentRequest;
 import com.company.kb.dto.request.UpdateDocumentRequest;
 import com.company.kb.entity.Document;
@@ -33,57 +32,55 @@ public class DocumentController {
 
     @GetMapping
     @Operation(summary = "获取文档列表", description = "支持分页、关键词搜索、分类过滤、状态过滤")
-    public ApiResponse<Page<Document>> list(
+    public Page<Document> list(
             @RequestParam(defaultValue = "1") @Min(1) int page,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) String status) {
-        return ApiResponse.success(documentService.listDocuments(page, size, keyword, categoryId, status));
+        return documentService.listDocuments(page, size, keyword, categoryId, status);
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "获取文档详情")
-    public ApiResponse<Document> get(@PathVariable Long id) {
-        return ApiResponse.success(documentService.getDocument(id));
+    public Document get(@PathVariable Long id) {
+        return documentService.getDocument(id);
     }
 
     @PostMapping
     @Operation(summary = "创建文档")
-    public ApiResponse<Document> create(@RequestBody @Valid CreateDocumentRequest request) {
-        return ApiResponse.success("创建成功", documentService.createDocument(toEntity(request)));
+    public Document create(@RequestBody @Valid CreateDocumentRequest request) {
+        return documentService.createDocument(toEntity(request));
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "更新文档", description = "支持部分更新，只更新非 null 字段")
-    public ApiResponse<Document> update(@PathVariable Long id, @RequestBody @Valid UpdateDocumentRequest request) {
-        return ApiResponse.success("更新成功", documentService.updateDocument(id, toEntity(request)));
+    public Document update(@PathVariable Long id, @RequestBody @Valid UpdateDocumentRequest request) {
+        return documentService.updateDocument(id, toEntity(request));
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "删除文档", description = "软删除（设置 deletedAt 时间戳）")
-    public ApiResponse<Void> delete(@PathVariable Long id) {
+    public void delete(@PathVariable Long id) {
         documentService.deleteDocument(id);
-        return ApiResponse.success("删除成功", null);
     }
 
     @GetMapping("/featured")
     @Operation(summary = "获取精选文档")
-    public ApiResponse<Page<Document>> featured(
+    public Page<Document> featured(
             @RequestParam(defaultValue = "1") @Min(1) int page,
             @RequestParam(defaultValue = "10") @Min(1) @Max(50) int size) {
-        return ApiResponse.success(documentService.getFeaturedDocuments(page, size));
+        return documentService.getFeaturedDocuments(page, size);
     }
 
     @GetMapping("/popular")
     @Operation(summary = "获取热门文档", description = "按浏览量降序")
-    public ApiResponse<Page<Document>> popular(
+    public Page<Document> popular(
             @RequestParam(defaultValue = "1") @Min(1) int page,
             @RequestParam(defaultValue = "10") @Min(1) @Max(50) int size) {
-        return ApiResponse.success(documentService.getPopularDocuments(page, size));
+        return documentService.getPopularDocuments(page, size);
     }
 
-    /** CreateDocumentRequest → Document Entity */
     private Document toEntity(CreateDocumentRequest req) {
         return Document.builder()
                 .title(req.getTitle())
@@ -93,7 +90,6 @@ public class DocumentController {
                 .build();
     }
 
-    /** UpdateDocumentRequest → Document Entity（字段可能为 null，由 Service 层做部分更新） */
     private Document toEntity(UpdateDocumentRequest req) {
         return Document.builder()
                 .title(req.getTitle())
