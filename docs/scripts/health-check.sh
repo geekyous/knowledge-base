@@ -10,11 +10,11 @@
 #   4. 分层检查: 容器状态 → 网络连接 → API 可用性
 #
 # 📖 使用方式:
-#   ./scripts/health-check.sh
+#   ./docs/scripts/health-check.sh
 #
 # 🔗 相关文件:
 #   - docker-compose.yml       服务定义
-#   - scripts/start-demo.sh    启动脚本
+#   - docs/scripts/start-demo.sh    启动脚本
 #
 # ============================================
 

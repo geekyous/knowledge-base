@@ -7,7 +7,7 @@
 ## 📂 文档结构
 
 ```
-features/
+docs/features/
 ├── F01-auth/                      # 用户认证与权限管理
 │   ├── 01-design.md              # 功能设计文档
 │   ├── 02-technical.md           # 技术设计文档

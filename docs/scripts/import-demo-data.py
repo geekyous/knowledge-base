@@ -15,13 +15,13 @@
 
 📖 使用方式:
     # 导入所有数据（会先检查服务状态）
-    python scripts/import-demo-data.py
+    python docs/scripts/import-demo-data.py
 
     # 跳过服务检查，直接导入
-    python scripts/import-demo-data.py --skip-checks
+    python docs/scripts/import-demo-data.py --skip-checks
 
     # 指定服务地址
-    python scripts/import-demo-data.py --es-host 192.168.1.100 --qdrant-host 192.168.1.100
+    python docs/scripts/import-demo-data.py --es-host 192.168.1.100 --qdrant-host 192.168.1.100
 
 🔗 相关文件:
     - ai-service/scripts/init_elasticsearch.py  ES 索引初始化

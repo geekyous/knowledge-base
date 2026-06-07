@@ -17,8 +17,8 @@
 cd /path/to/knowledge-base
 
 # 2. 启动所有服务
-chmod +x scripts/start-demo.sh
-./scripts/start-demo.sh
+chmod +x docs/scripts/start-demo.sh
+./docs/scripts/start-demo.sh
 ```
 
 启动脚本会自动：
@@ -138,8 +138,8 @@ docker compose down -v
 docker compose up -d --build
 
 # 健康检查
-chmod +x scripts/health-check.sh
-./scripts/health-check.sh
+chmod +x docs/scripts/health-check.sh
+./docs/scripts/health-check.sh
 ```
 
 ## 常见问题
