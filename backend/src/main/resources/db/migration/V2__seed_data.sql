@@ -1,20 +1,12 @@
 -- 企业知识库问答系统 - 精简版种子数据
 -- 版本: V2 (精简版，后续通过 V3 扩充)
 -- 说明: 包含最小可用数据，用于学习和演示
+-- 注意: 用户数据由 DataInitializer 根据环境变量创建，不在 SQL 中硬编码密码
 
 SET NAMES utf8mb4;
 
 -- =====================================================
--- 1. 用户数据 (3个: 管理员 + 编辑 + 普通用户)
--- 密码均为 BCrypt 加密的 admin123
--- =====================================================
-INSERT INTO kb_users (id, username, password, email, phone, role, status) VALUES
-(1, 'admin',  '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', 'admin@company.com',    '13800000001', 'ADMIN',  'ACTIVE'),
-(2, 'editor', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', 'editor@company.com',   '13800000002', 'EDITOR', 'ACTIVE'),
-(3, 'user1',  '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', 'user1@company.com',    '13800000003', 'USER',   'ACTIVE');
-
--- =====================================================
--- 2. 分类数据 (4个一级分类 + 二级分类)
+-- 1. 分类数据 (4个一级分类 + 6个二级分类)
 -- =====================================================
 -- 一级分类
 INSERT INTO kb_categories (id, name, slug, description, icon, sort_order, parent_id) VALUES
@@ -33,7 +25,7 @@ INSERT INTO kb_categories (id, name, slug, description, icon, sort_order, parent
 (23, '部署指南',   'tech-deploy',   '部署运维指南',     'Upload',    3, 2);
 
 -- =====================================================
--- 3. 标签数据 (8个常用标签)
+-- 2. 标签数据 (8个常用标签)
 -- =====================================================
 INSERT INTO kb_tags (id, name, color, usage_count) VALUES
 (1,  '流程',   '#409EFF', 3),
@@ -46,7 +38,7 @@ INSERT INTO kb_tags (id, name, color, usage_count) VALUES
 (8,  '法律',   '#303133', 1);
 
 -- =====================================================
--- 4. 文档数据 (6篇精简文档，覆盖主要分类)
+-- 3. 文档数据 (6篇精简文档，覆盖主要分类)
 -- =====================================================
 
 -- 文档1: 员工手册 (人事制度 > 招聘流程)
@@ -384,7 +376,7 @@ INSERT INTO kb_documents (id, title, summary, content, category_id, author_id, s
  4, 3, 'DRAFT', 0, 0, FALSE, NULL);
 
 -- =====================================================
--- 5. 文档-标签关联
+-- 4. 文档-标签关联
 -- =====================================================
 INSERT INTO kb_document_tags (document_id, tag_id) VALUES
 (1, 4), (1, 1), (1, 3),   -- 员工手册: 制度, 流程, 指南
@@ -395,7 +387,7 @@ INSERT INTO kb_document_tags (document_id, tag_id) VALUES
 (6, 8), (6, 2);             -- 合同管理: 法律, 规范
 
 -- =====================================================
--- 6. 示例对话和消息
+-- 5. 示例对话和消息
 -- =====================================================
 
 -- 对话1: 关于年假
@@ -433,7 +425,7 @@ INSERT INTO kb_messages (id, conversation_id, role, content, sources) VALUES
  '[{"documentId": 5, "title": "销售话术与客户沟通指南", "snippet": "对比节省的人力成本和效率提升", "relevance": 0.88}]');
 
 -- =====================================================
--- 7. 操作日志（示例）
+-- 6. 操作日志（示例）
 -- =====================================================
 INSERT INTO kb_operation_logs (user_id, module, action, method, url, ip, execution_time) VALUES
 (1, 'auth',    'login',    'POST', '/api/v1/auth/login',          '127.0.0.1', 120),
@@ -443,20 +435,9 @@ INSERT INTO kb_operation_logs (user_id, module, action, method, url, ip, executi
 (3, 'chat',    'ask',      'POST', '/api/v1/chat/ask',             '127.0.0.1', 2300);
 
 -- =====================================================
--- 8. 点赞数据
+-- 7. 点赞数据
 -- =====================================================
 INSERT INTO kb_likes (user_id, target_type, target_id) VALUES
 (3, 'DOCUMENT', 1),
 (3, 'DOCUMENT', 2),
 (2, 'DOCUMENT', 3);
-
--- =====================================================
--- 完成
--- =====================================================
-SELECT 'Seed data inserted successfully!' AS message;
-SELECT CONCAT('Users: ', COUNT(*)) AS stats FROM users
-UNION ALL SELECT CONCAT('Categories: ', COUNT(*)) FROM categories
-UNION ALL SELECT CONCAT('Documents: ', COUNT(*)) FROM documents
-UNION ALL SELECT CONCAT('Tags: ', COUNT(*)) FROM tags
-UNION ALL SELECT CONCAT('Conversations: ', COUNT(*)) FROM conversations
-UNION ALL SELECT CONCAT('Messages: ', COUNT(*)) FROM messages;

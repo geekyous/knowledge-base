@@ -256,7 +256,7 @@ start_services() {
 #
 # 💡 学习要点:
 #   这里只初始化 Redis 缓存，因为:
-#   - MySQL 数据: 由 docker-entrypoint-initdb.d 下的 SQL 自动导入
+#   - MySQL 数据: 由 Flyway 迁移脚本在应用启动时自动执行
 #   - Elasticsearch/Qdrant: 需要依赖 Python 环境，由单独脚本处理
 #   - Redis: 缓存数据可选，不影响核心功能
 # =====================================================
