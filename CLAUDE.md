@@ -46,6 +46,7 @@
 - `pom.xml` 变更 → `mvn compile`（JDK 17）
 - `package.json` 变更 → `npm run build`
 - 移动文件/目录 → `grep -rn "旧路径"` 确认无残留引用
+- 数据库变更 → 新建 `V{N}__描述.sql` 迁移脚本（Flyway 管理，详见 `docs/11-flyway-guide.md`）
 
 ## 文档同步
 

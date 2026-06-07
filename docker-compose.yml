@@ -88,6 +88,10 @@ services:
       - JWT_SECRET=${JWT_SECRET:-change-this-in-production}
       # ---- Jasypt 主密钥（用于解密 ENC() 包裹的配置值）----
       - JASYPT_ENCRYPTOR_PASSWORD=${JASYPT_ENCRYPTOR_PASSWORD}
+      # ---- 初始用户密码（仅首次启动时使用，建议通过 .env 设置强密码）----
+      - INIT_ADMIN_PASSWORD=${INIT_ADMIN_PASSWORD:-admin123}
+      - INIT_EDITOR_PASSWORD=${INIT_EDITOR_PASSWORD:-admin123}
+      - INIT_USER_PASSWORD=${INIT_USER_PASSWORD:-admin123}
     depends_on:
       mysql:
         condition: service_healthy
@@ -199,9 +203,7 @@ services:
     volumes:
       # ---- Named Volume：持久化数据库文件 ----
       - mysql-data:/var/lib/mysql
-      # ---- Bind Mount：初始化 SQL 脚本（只读）----
-      # MySQL 镜像会在首次启动时自动执行 /docker-entrypoint-initdb.d/ 下的 .sql 文件
-      - ./backend/src/main/resources/db/migration:/docker-entrypoint-initdb.d:ro
+      # ---- 数据库初始化由 Flyway 管理（应用启动时自动执行迁移脚本）----
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s

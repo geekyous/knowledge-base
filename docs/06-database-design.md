@@ -494,7 +494,34 @@ TTL: 30 (30秒)
 - **RTO**: 1小时
 - **RPO**: 5分钟
 
+## 🔄 数据库迁移管理（Flyway）
+
+本项目使用 [Flyway](https://flywaydb.org/) 管理数据库版本迁移，替代之前的 Docker initdb 方案。
+
+### 迁移脚本目录
+
+```
+backend/src/main/resources/db/migration/
+├── V1__init_schema.sql      ← 建表（12 张表 + 初始角色）
+└── V2__seed_data.sql        ← 种子数据（分类、标签、文档等）
+```
+
+### 工作原理
+
+1. 应用启动时，Flyway 扫描 `db/migration/` 目录
+2. 对比 `flyway_schema_history` 表，找出未执行的迁移脚本
+3. 按版本号顺序执行新脚本，并记录到历史表
+
+### 新增迁移脚本
+
+```bash
+# 创建新迁移脚本
+touch backend/src/main/resources/db/migration/V3__add_user_nickname.sql
+```
+
+> 详细使用方法见 [11-flyway-guide.md](11-flyway-guide.md)
+
 ---
 
-**文档版本：** v1.0
-**最后更新：** 2026-05-31
+**文档版本：** v1.1
+**最后更新：** 2026-06-08

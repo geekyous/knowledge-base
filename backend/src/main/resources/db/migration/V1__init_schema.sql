@@ -2,15 +2,13 @@
 -- 版本: V1
 -- 创建时间: 2026-05-31
 -- 说明: 创建所有数据库表结构
+-- 迁移管理: Flyway（本文件只增不删，不可包含 DROP 语句）
 
--- 设置字符集
 SET NAMES utf8mb4;
-SET FOREIGN_KEY_CHECKS = 0;
 
 -- =====================================================
 -- 1. 用户表 (kb_users)
 -- =====================================================
-DROP TABLE IF EXISTS kb_users;
 CREATE TABLE kb_users (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '用户ID',
     username VARCHAR(50) NOT NULL UNIQUE COMMENT '用户名',
@@ -34,7 +32,6 @@ CREATE TABLE kb_users (
 -- =====================================================
 -- 2. 角色表 (kb_roles)
 -- =====================================================
-DROP TABLE IF EXISTS kb_roles;
 CREATE TABLE kb_roles (
     id INT PRIMARY KEY AUTO_INCREMENT COMMENT '角色ID',
     name VARCHAR(50) NOT NULL UNIQUE COMMENT '角色名称',
@@ -48,7 +45,6 @@ CREATE TABLE kb_roles (
 -- =====================================================
 -- 3. 分类表 (kb_categories)
 -- =====================================================
-DROP TABLE IF EXISTS kb_categories;
 CREATE TABLE kb_categories (
     id INT PRIMARY KEY AUTO_INCREMENT COMMENT '分类ID',
     name VARCHAR(50) NOT NULL COMMENT '分类名称',
@@ -70,7 +66,6 @@ CREATE TABLE kb_categories (
 -- =====================================================
 -- 4. 文档表 (kb_documents)
 -- =====================================================
-DROP TABLE IF EXISTS kb_documents;
 CREATE TABLE kb_documents (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '文档ID',
     title VARCHAR(255) NOT NULL COMMENT '文档标题',
@@ -101,7 +96,6 @@ CREATE TABLE kb_documents (
 -- =====================================================
 -- 5. 标签表 (kb_tags)
 -- =====================================================
-DROP TABLE IF EXISTS kb_tags;
 CREATE TABLE kb_tags (
     id INT PRIMARY KEY AUTO_INCREMENT COMMENT '标签ID',
     name VARCHAR(50) NOT NULL UNIQUE COMMENT '标签名称',
@@ -116,7 +110,6 @@ CREATE TABLE kb_tags (
 -- =====================================================
 -- 6. 文档标签关联表 (kb_document_tags)
 -- =====================================================
-DROP TABLE IF EXISTS kb_document_tags;
 CREATE TABLE kb_document_tags (
     document_id BIGINT NOT NULL COMMENT '文档ID',
     tag_id INT NOT NULL COMMENT '标签ID',
@@ -132,7 +125,6 @@ CREATE TABLE kb_document_tags (
 -- =====================================================
 -- 7. 文档版本表 (kb_document_versions)
 -- =====================================================
-DROP TABLE IF EXISTS kb_document_versions;
 CREATE TABLE kb_document_versions (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '版本ID',
     document_id BIGINT NOT NULL COMMENT '文档ID',
@@ -152,7 +144,6 @@ CREATE TABLE kb_document_versions (
 -- =====================================================
 -- 8. 对话表 (kb_conversations)
 -- =====================================================
-DROP TABLE IF EXISTS kb_conversations;
 CREATE TABLE kb_conversations (
     id VARCHAR(50) PRIMARY KEY COMMENT '对话ID',
     user_id BIGINT NOT NULL COMMENT '用户ID',
@@ -169,7 +160,6 @@ CREATE TABLE kb_conversations (
 -- =====================================================
 -- 9. 消息表 (kb_messages)
 -- =====================================================
-DROP TABLE IF EXISTS kb_messages;
 CREATE TABLE kb_messages (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '消息ID',
     conversation_id VARCHAR(50) NOT NULL COMMENT '对话ID',
@@ -186,7 +176,6 @@ CREATE TABLE kb_messages (
 -- =====================================================
 -- 10. 附件表 (kb_attachments)
 -- =====================================================
-DROP TABLE IF EXISTS kb_attachments;
 CREATE TABLE kb_attachments (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '附件ID',
     document_id BIGINT COMMENT '文档ID',
@@ -206,7 +195,6 @@ CREATE TABLE kb_attachments (
 -- =====================================================
 -- 11. 操作日志表 (kb_operation_logs)
 -- =====================================================
-DROP TABLE IF EXISTS kb_operation_logs;
 CREATE TABLE kb_operation_logs (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '日志ID',
     user_id BIGINT COMMENT '用户ID',
@@ -231,7 +219,6 @@ CREATE TABLE kb_operation_logs (
 -- =====================================================
 -- 12. 点赞表 (kb_likes)
 -- =====================================================
-DROP TABLE IF EXISTS kb_likes;
 CREATE TABLE kb_likes (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '点赞ID',
     user_id BIGINT NOT NULL COMMENT '用户ID',
@@ -245,17 +232,9 @@ CREATE TABLE kb_likes (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='点赞表';
 
 -- =====================================================
--- 恢复外键检查
--- =====================================================
-SET FOREIGN_KEY_CHECKS = 1;
-
--- =====================================================
 -- 插入初始角色数据
 -- =====================================================
 INSERT INTO kb_roles (id, name, description, permissions) VALUES
 (1, 'USER', '普通用户', '["read:document", "search:document", "chat:ask", "profile:update"]'),
 (2, 'EDITOR', '编辑人员', '["read:document", "search:document", "chat:ask", "profile:update", "create:document", "edit:document", "delete:document"]'),
 (3, 'ADMIN', '系统管理员', '["*"]');
-
--- 完成
-SELECT 'Database schema created successfully!' AS message;

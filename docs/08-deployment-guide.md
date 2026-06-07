@@ -169,7 +169,7 @@ services:
       - MYSQL_PASSWORD=${DB_PASSWORD}
     volumes:
       - mysql-data:/var/lib/mysql
-      - ./backend/src/main/resources/db/migration:/docker-entrypoint-initdb.d
+      # 数据库迁移由 Flyway 管理，无需挂载 initdb 脚本
     networks:
       - app-network
     restart: unless-stopped
