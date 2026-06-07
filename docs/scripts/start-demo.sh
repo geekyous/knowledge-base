@@ -149,6 +149,9 @@ create_env() {
         echo "📝 创建 .env 文件..."
         # 尝试从模板复制，如果模板不存在则创建默认配置
         cp .env.example .env 2>/dev/null || cat > .env << 'EOF'
+# Jasypt 主密钥（用于解密 application.yml 中的 ENC() 配置值）
+JASYPT_ENCRYPTOR_PASSWORD=kb-demo-2026
+
 # 数据库配置
 DB_ROOT_PASSWORD=root_password
 DB_DATABASE=knowledge_base

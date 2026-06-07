@@ -60,12 +60,15 @@ DB_HOST=mysql
 DB_PORT=3306
 DB_DATABASE=knowledge_base
 DB_USERNAME=kb_user
-DB_PASSWORD=secure_password_here
+DB_PASSWORD=secure_password_here        # 支持明文或 ENC(密文) 格式
+
+# Jasypt 主密钥（用于解密 ENC() 配置值，⚠️ 勿提交到代码仓库）
+JASYPT_ENCRYPTOR_PASSWORD=your-master-key
 
 # Redis 配置
 REDIS_HOST=redis
 REDIS_PORT=6379
-REDIS_PASSWORD=
+REDIS_PASSWORD=                          # 支持明文或 ENC(密文) 格式
 
 # Elasticsearch 配置
 ES_HOST=elasticsearch
@@ -131,6 +134,7 @@ services:
       - REDIS_PORT=6379
       - ES_HOST=elasticsearch
       - ES_PORT=9200
+      - JASYPT_ENCRYPTOR_PASSWORD=${JASYPT_ENCRYPTOR_PASSWORD}
     depends_on:
       - mysql
       - redis
@@ -514,6 +518,52 @@ GRANT SELECT ON knowledge_base.* TO 'kb_readonly'@'%';
 CREATE USER 'kb_app'@'%' IDENTIFIED BY 'app_password';
 GRANT SELECT, INSERT, UPDATE, DELETE ON knowledge_base.* TO 'kb_app'@'%';
 ```
+
+### 4. 配置密码加密（Jasypt）
+
+项目使用 [Jasypt](https://github.com/ulisesbocchio/jasypt-spring-boot) 对 `application.yml` 中的敏感配置进行加密，避免密码明文存储在代码仓库中。
+
+#### 加密原理
+
+```
+明文密码 → JasyptEncryptUtil 加密 → ENC(密文) → 写入 application.yml
+                                                    ↓
+                                       运行时由 JASYPT_ENCRYPTOR_PASSWORD 主密钥解密
+```
+
+#### 生成加密密文
+
+```bash
+# 1. 在 backend 目录下，使用 JDK 17 编译
+cd backend
+JAVA_HOME=$(/usr/libexec/java_home -v 17) mvn compile
+
+# 2. 构建类路径
+JAVA_HOME=$(/usr/libexec/java_home -v 17) mvn -q dependency:build-classpath -Dmdep.outputFile=/tmp/kb-cp.txt
+
+# 3. 加密密码明文
+JAVA_HOME=$(/usr/libexec/java_home -v 17) && \
+$JAVA_HOME/bin/java -cp "$(cat /tmp/kb-cp.txt):target/classes" \
+  -Djasypt.encryptor.password=你的主密钥 \
+  com.company.kb.utils.JasyptEncryptUtil encrypt 密码明文
+
+# 输出示例：ENC(BM2F1Myec/dtnAO9xl1nAJ7...)
+```
+
+#### 在 .env 中使用加密值
+
+```bash
+# .env 文件中密码支持明文和 ENC() 两种格式
+JASYPT_ENCRYPTOR_PASSWORD=你的主密钥           # 主密钥，仅存于 .env（gitignored）
+DB_PASSWORD=ENC(BM2F1Myec/dtnAO9xl1nAJ7...)    # 加密后的数据库密码
+JWT_SECRET=ENC(Gubp/mWyNOEHoXcyvWGqn...)       # 加密后的 JWT 密钥
+```
+
+#### 关键注意事项
+
+- **主密钥 `JASYPT_ENCRYPTOR_PASSWORD` 绝不能提交到代码仓库**，只存放在 `.env` 文件中
+- 算法为 `PBEWITHHMACSHA512ANDAES_256`，需要 JDK 17+ 运行
+- 未包裹在 `ENC()` 中的配置值会被 Jasypt 原样传递，支持明文与密文混用
 
 ## 📊 监控和日志
 

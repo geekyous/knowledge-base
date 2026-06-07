@@ -85,6 +85,9 @@ ensure_env() {
     if [ ! -f .env ]; then
         echo -e "${BLUE}📝 创建 .env 文件...${NC}"
         cp .env.example .env 2>/dev/null || cat > .env << 'EOF'
+# Jasypt 主密钥（用于解密 application.yml 中的 ENC() 配置值）
+JASYPT_ENCRYPTOR_PASSWORD=kb-demo-2026
+
 # 数据库配置
 DB_ROOT_PASSWORD=root_password
 DB_DATABASE=knowledge_base
@@ -270,6 +273,7 @@ show_dev_guide() {
     echo "    -DDB_PORT=3306 \\"
     echo "    -DDB_USERNAME=kb_user \\"
     echo "    -DDB_PASSWORD=kb_password \\"
+    echo "    -DJASYPT_ENCRYPTOR_PASSWORD=kb-demo-2026 \\"
     echo "    -DREDIS_HOST=localhost \\"
     echo "    -DES_HOST=http://localhost \\"
     echo "    -DAI_SERVICE_URL=http://localhost:8000"
