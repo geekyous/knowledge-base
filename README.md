@@ -80,8 +80,9 @@ knowledge-base/
 ├── frontend/              # Vue 3 前端项目
 ├── backend/               # Spring Boot 后端项目
 ├── ai-service/            # Python AI 服务
+├── deploy/                # 部署配置（nginx、docker-compose 等）
 ├── docs/                  # 项目文档
-├── scripts/               # 开发脚本
+├── docs/scripts/          # 开发脚本
 └── docker-compose.yml     # Docker 编排配置
 ```
 

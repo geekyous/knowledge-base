@@ -1,42 +1,90 @@
+# =============================================================================
+# Docker Compose — 企业知识库问答系统（学习环境）
+# =============================================================================
+#
+# 【服务架构】8 个服务
+#   nginx          — 反向代理 + 静态文件 (:80)
+#   backend        — Spring Boot API (:8080)
+#   ai-service     — FastAPI AI 服务 (:8000)
+#   ollama         — 本地 LLM 推理 (:11434)
+#   mysql          — 数据库 (:3306)
+#   redis          — 缓存 (:6379)
+#   elasticsearch  — 全文搜索 (:9200)
+#   qdrant         — 向量数据库 (:6333)
+#
+# 【使用方式】
+#   docker compose up -d              # 启动所有服务
+#   docker compose logs -f backend    # 查看后端日志
+#   docker compose ps                 # 查看服务状态
+#   docker compose down               # 停止所有服务
+#
+# 💡 学习要点:
+# 1. depends_on + condition: 确保依赖服务健康后才启动
+# 2. healthcheck: Docker 定期检查服务是否正常
+# 3. volumes: 数据持久化（容器重启数据不丢失）
+# 4. networks: 所有服务在同一个网络中，可通过服务名互相访问
+# =============================================================================
+# ⚠️ 注意: Docker Compose v3.8 不再需要 version 字段，此处保留仅为兼容提示
 version: '3.8'
 
 services:
-  # Nginx 反向代理
+  # ===========================================================================
+  # Nginx — 统一入口，反向代理
+  # ===========================================================================
+  # 职责：接收所有外部请求，按路径转发到对应后端服务
+  #   /           → 前端静态文件（Vue SPA）
+  #   /api/*      → backend（Spring Boot）
+  #   /ai/*       → ai-service（FastAPI）
+  # ===========================================================================
   nginx:
     image: nginx:1.25-alpine
+    # alpine 变体体积仅 ~7MB，适合作为反向代理
     ports:
-      - "80:80"
-      - "443:443"
+      - "80:80"     # HTTP — 对外暴露的统一入口
+      - "443:443"   # HTTPS — 预留，当前未配置证书
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/ssl:/etc/nginx/ssl:ro
-      - ./frontend/dist:/usr/share/nginx/html:ro
+      # ---- Bind Mount（只读挂载配置与静态文件）----
+      # :ro = read-only，容器内无法修改这些文件，安全性更好
+      - ./deploy/nginx/nginx.conf:/etc/nginx/nginx.conf:ro    # Nginx 主配置文件
+      - ./deploy/nginx/ssl:/etc/nginx/ssl:ro                   # SSL 证书目录（预留）
+      - ./frontend/dist:/usr/share/nginx/html:ro        # 前端构建产物，需先 npm run build
     depends_on:
       backend:
-        condition: service_healthy
+        condition: service_healthy    # 等 backend 健康检查通过后才启动，避免 502
     networks:
       - app-network
-    restart: unless-stopped
+    restart: unless-stopped    # 容器异常退出时自动重启（手动 stop 除外）
 
-  # 后端服务
+  # ===========================================================================
+  # Spring Boot 后端 — REST API + JWT 认证
+  # ===========================================================================
+  # 技术栈：Spring Boot 3 + MyBatis-Plus + JWT
+  # 与其他服务通信全部走 Docker 内部网络（service name 即主机名）
+  # ===========================================================================
   backend:
     build:
       context: ./backend
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile    # 多阶段构建：Maven 编译 → JRE 运行
     ports:
-      - "8080:8080"
+      - "8080:8080"    # 仅开发调试用；生产环境应移除，只通过 nginx 访问
     environment:
-      - SPRING_PROFILES_ACTIVE=production
-      - DB_HOST=mysql
+      # ---- Spring 配置 ----
+      - SPRING_PROFILES_ACTIVE=production    # 激活 application-production.yml
+      # ---- 数据库连接（通过环境变量覆盖 application.yml 中的占位符）----
+      - DB_HOST=mysql                        # Docker 服务名即主机名
       - DB_PORT=3306
-      - DB_DATABASE=${DB_DATABASE:-knowledge_base}
+      - DB_DATABASE=${DB_DATABASE:-knowledge_base}   # ${VAR:-default} 语法：优先读 .env 文件
       - DB_USERNAME=${DB_USERNAME:-kb_user}
       - DB_PASSWORD=${DB_PASSWORD:-kb_password}
+      # ---- Redis ----
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      # ---- Elasticsearch ----
       - ES_HOST=elasticsearch
       - ES_PORT=9200
+      # ---- AI 服务（内部通信，无需暴露到外部）----
       - AI_SERVICE_URL=http://ai-service:8000
+      # ---- JWT 密钥（⚠️ 生产环境务必通过 .env 设置强密钥）----
       - JWT_SECRET=${JWT_SECRET:-change-this-in-production}
     depends_on:
       mysql:
@@ -45,38 +93,59 @@ services:
         condition: service_healthy
       elasticsearch:
         condition: service_healthy
+    # Actuator 健康检查路径受 context-path (/api) 影响
+    # 实际路径为 /api/actuator/health
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
-      interval: 15s
-      timeout: 5s
-      retries: 5
-      start_period: 40s
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/actuator/health"]
+      interval: 15s      # 每 15s 检查一次
+      timeout: 5s        # 单次检查超时 5s
+      retries: 5         # 连续失败 5 次才标记为 unhealthy
+      start_period: 60s  # 容器启动后 60s 内的失败不计入 retries（等待 JVM 预热）
     networks:
       - app-network
     restart: unless-stopped
 
-  # AI 服务
+  # ===========================================================================
+  # FastAPI AI 服务 — RAG 问答 + 向量检索
+  # ===========================================================================
+  # 技术栈：FastAPI + LangChain + Ollama/Qdrant
+  # 支持 Ollama（本地）和 OpenAI/Anthropic（云端）两种 LLM 后端
+  # ===========================================================================
   ai-service:
     build:
       context: ./ai-service
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile    # 多阶段构建：pip install → uvicorn 运行
     ports:
-      - "8000:8000"
+      - "8000:8000"    # 仅开发调试用；生产环境应移除，只通过 nginx 访问
     environment:
+      # ---- LLM 提供商选择 ----
+      # ollama = 本地推理（默认，免费）| openai | anthropic = 云端 API（需密钥）
+      - LLM_PROVIDER=${LLM_PROVIDER:-ollama}
+      # ---- Ollama 配置 ----
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://ollama:11434}   # 容器内通过服务名访问
+      - OLLAMA_CHAT_MODEL=${OLLAMA_CHAT_MODEL:-qwen2}             # 聊天模型，需提前 pull
+      - OLLAMA_EMBED_MODEL=${OLLAMA_EMBED_MODEL:-nomic-embed-text} # 嵌入模型，需提前 pull
+      # ---- 云端 LLM API 密钥（可选，仅在 LLM_PROVIDER 非 ollama 时使用）----
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      # ---- 向量数据库 ----
       - QDRANT_HOST=qdrant
       - QDRANT_PORT=6333
+      # ---- Redis（用于缓存 + 会话管理）----
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - MOCK_MODE=${MOCK_MODE:-true}
+      # ---- Mock 模式：跳过真实 LLM 调用，用于开发测试 ----
+      - MOCK_MODE=${MOCK_MODE:-false}
     depends_on:
+      ollama:
+        condition: service_started      # 不等健康检查，因为 ollama 首次启动需要拉取模型
       qdrant:
         condition: service_healthy
       redis:
         condition: service_healthy
+    # Python slim 镜像无 curl，使用 Python 脚本做健康检查
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -85,40 +154,80 @@ services:
       - app-network
     restart: unless-stopped
 
-  # MySQL 数据库
+  # ===========================================================================
+  # Ollama — 本地 LLM 推理服务
+  # ===========================================================================
+  # 提供 OpenAI 兼容 API，支持聊天补全和文本嵌入
+  # 模型存储在 named volume 中，容器重建后模型不丢失
+  #
+  # 首次使用需拉取模型：
+  #   docker exec -it <容器名> ollama pull qwen2
+  #   docker exec -it <容器名> ollama pull nomic-embed-text
+  #
+  # 💡 如果 Mac 使用 Apple Silicon，确保 Docker Desktop 已启用 VirtioFS
+  # ===========================================================================
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"    # Ollama API 端口（开发调试用）
+    volumes:
+      # ---- Named Volume：持久化已下载的模型文件 ----
+      # 模型文件通常数 GB，避免每次容器重建都重新下载
+      - ollama-data:/root/.ollama
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  # ===========================================================================
+  # MySQL 8.0 — 主数据库
+  # ===========================================================================
+  # 存储用户、文档元数据、对话历史等结构化数据
+  # 初始化脚本在首次启动时自动执行（仅当数据目录为空时）
+  # ===========================================================================
   mysql:
     image: mysql:8.0
     ports:
-      - "3306:3306"
+      - "3306:3306"    # 开发调试用（如使用 Navicat/DBeaver 连接）
     environment:
+      # ⚠️ root 密码仅限开发环境使用，生产环境务必通过 .env 设置
       - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD:-root_password}
-      - MYSQL_DATABASE=${DB_DATABASE:-knowledge_base}
-      - MYSQL_USER=${DB_USERNAME:-kb_user}
+      - MYSQL_DATABASE=${DB_DATABASE:-knowledge_base}     # 自动创建的数据库
+      - MYSQL_USER=${DB_USERNAME:-kb_user}                 # 自动创建的用户（授权给上方数据库）
       - MYSQL_PASSWORD=${DB_PASSWORD:-kb_password}
     volumes:
+      # ---- Named Volume：持久化数据库文件 ----
       - mysql-data:/var/lib/mysql
+      # ---- Bind Mount：初始化 SQL 脚本（只读）----
+      # MySQL 镜像会在首次启动时自动执行 /docker-entrypoint-initdb.d/ 下的 .sql 文件
       - ./backend/src/main/resources/db/migration:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
       timeout: 5s
-      retries: 10
+      retries: 10        # MySQL 初始化可能较慢，给足重试次数
       start_period: 30s
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    # utf8mb4 支持完整的 Unicode（包括 emoji），比 utf8 更安全
     networks:
       - app-network
     restart: unless-stopped
 
-  # Redis 缓存
+  # ===========================================================================
+  # Redis 7 — 缓存 + 会话存储
+  # ===========================================================================
+  # 用途：JWT Token 黑名单、对话上下文缓存、接口限流计数器
+  # appendonly yes 开启 AOF 持久化，容器重启后数据不丢失
+  # ===========================================================================
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"
-    command: redis-server --appendonly yes
+      - "6379:6379"    # 开发调试用（如使用 RedisInsight 连接）
+    command: redis-server --appendonly yes    # 开启 AOF 持久化，重启后数据恢复
     volumes:
-      - redis-data:/data
+      # ---- Named Volume：持久化 AOF 文件 ----
+      - redis-data:/data    # Redis 默认数据目录，AOF/RDB 文件存于此
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "ping"]    # 返回 PONG 即为健康
       interval: 10s
       timeout: 5s
       retries: 5
@@ -126,34 +235,46 @@ services:
       - app-network
     restart: unless-stopped
 
-  # Elasticsearch
+  # ===========================================================================
+  # Elasticsearch 8.x — 全文搜索引擎
+  # ===========================================================================
+  # 用于文档内容的全文检索，支持中文分词
+  # 内存建议：至少 512MB（ES_JAVA_OPTS），生产环境建议 1-2GB
+  # ===========================================================================
   elasticsearch:
     image: elasticsearch:8.19.16
     ports:
-      - "9200:9200"
+      - "9200:9200"    # REST API 端口（开发调试用）
     environment:
-      - discovery.type=single-node
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-      - xpack.security.enabled=false
+      - discovery.type=single-node    # 单节点模式，无需集群发现
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"    # JVM 堆内存，Xms=Xmx 避免动态扩缩开销
+      - xpack.security.enabled=false          # 关闭安全认证（仅限开发/学习环境）
     volumes:
+      # ---- Named Volume：持久化索引数据 ----
       - elasticsearch-data:/usr/share/elasticsearch/data
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
       interval: 15s
       timeout: 10s
-      retries: 10
+      retries: 10        # ES 启动较慢，给足重试次数
       start_period: 40s
     networks:
       - app-network
     restart: unless-stopped
 
-  # Qdrant 向量数据库
+  # ===========================================================================
+  # Qdrant — 向量数据库（存储文档 Embedding 向量）
+  # ===========================================================================
+  # 用于 RAG 流程中的向量相似度检索
+  # 6333 = gRPC 端口（高性能），6334 = REST API 端口（调试用）
+  # ===========================================================================
   qdrant:
     image: qdrant/qdrant:latest
     ports:
-      - "6333:6333"
-      - "6334:6334"
+      - "6333:6333"    # gRPC 端口 — AI 服务通过此端口进行向量写入/查询
+      - "6334:6334"    # REST API 端口 — 开发调试用（可查看 Web Dashboard）
     volumes:
+      # ---- Named Volume：持久化向量数据与集合配置 ----
       - qdrant-data:/qdrant/storage
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:6333/healthz"]
@@ -164,12 +285,28 @@ services:
       - app-network
     restart: unless-stopped
 
+# =============================================================================
+# 网络 — 所有服务共用一个 bridge 网络
+# =============================================================================
+# 效果：服务之间可通过服务名（如 mysql、redis）互相访问
+# 对应 Docker DNS 解析：mysql → 容器内网 IP
+# =============================================================================
 networks:
-  app-network:
+  app-network:  
     driver: bridge
 
+# =============================================================================
+# Named Volumes — 数据持久化声明
+# =============================================================================
+# Docker 会在 /var/lib/docker/volumes/ 下管理这些卷
+# 特性：
+#   - 容器删除后数据仍然保留
+#   - docker compose down 不会删除 named volume（需加 --volumes 才删除）
+#   - 可通过 docker volume ls 查看、docker volume inspect 查看详情
+# =============================================================================
 volumes:
-  mysql-data:
-  redis-data:
-  elasticsearch-data:
-  qdrant-data:
+  mysql-data:           # MySQL 数据文件
+  redis-data:           # Redis AOF 持久化文件
+  elasticsearch-data:   # ES 索引数据
+  qdrant-data:          # Qdrant 向量数据与集合配置
+  ollama-data:          # Ollama 已下载的 LLM 模型文件（数 GB）

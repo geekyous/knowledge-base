@@ -106,8 +106,8 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./nginx/ssl:/etc/nginx/ssl
+      - ./deploy/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./deploy/nginx/ssl:/etc/nginx/ssl
       - ./frontend/dist:/usr/share/nginx/html
     depends_on:
       - backend

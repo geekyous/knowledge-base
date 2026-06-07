@@ -83,9 +83,9 @@
 - [x] 全局样式：main.css（滚动条美化 / 过渡动画 / 文字选中样式）
 
 ### Sprint 6：工具和文档
-- [x] 一键启动脚本（`scripts/start-demo.sh`）
-- [x] 健康检查脚本（`scripts/health-check.sh`）
-- [x] 数据导入脚本（`scripts/import-demo-data.py`）
+- [x] 一键启动脚本（`docs/scripts/start-demo.sh`）
+- [x] 健康检查脚本（`docs/scripts/health-check.sh`）
+- [x] 数据导入脚本（`docs/scripts/import-demo-data.py`）
 - [x] 快速开始指南（`docs/DEMO-QUICKSTART.md`）
 - [x] 演示场景指南（`docs/DEMO-SCENARIOS.md`）
 

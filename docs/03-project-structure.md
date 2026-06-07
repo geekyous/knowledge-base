@@ -7,8 +7,10 @@ knowledge-base/
 ├── frontend/                    # Vue 3 前端项目
 ├── backend/                     # Spring Boot 后端项目
 ├── ai-service/                  # Python AI 服务
+├── deploy/                      # 部署配置
+│   └── nginx/                   # Nginx 配置与 SSL 证书
 ├── docs/                        # 项目文档
-├── scripts/                     # 开发脚本
+├── docs/scripts/                # 开发脚本
 ├── docker-compose.yml           # Docker 编排配置
 ├── docker-compose.dev.yml       # 开发环境配置
 ├── .env.example                 # 环境变量示例
@@ -272,13 +274,26 @@ docs/
 ├── 06-database-design.md         # 数据库设计
 ├── 07-coding-standards.md        # 编码规范
 ├── 08-deployment-guide.md        # 部署指南
-└── 09-team-guide.md              # 团队协作指南
+├── 09-team-guide.md              # 团队协作指南
+├── features/                     # 功能设计文档
+│   ├── F01-auth/                 # 认证模块
+│   ├── F02-search/               # 搜索模块
+│   ├── F03-document/             # 文档管理模块
+│   ├── F04-ai-chat/              # AI 问答模块
+│   ├── F05-profile/              # 个人中心模块
+│   └── F06-admin/                # 管理后台模块
+└── scripts/                      # 开发脚本
+    ├── start-demo.sh             # 一键启动
+    ├── dev-infra.sh              # 本地开发基础设施
+    ├── health-check.sh           # 健康检查
+    ├── pull-ollama-models.sh     # 拉取 Ollama 模型
+    └── import-demo-data.py       # 导入演示数据
 ```
 
-## 🛠️ 脚本目录结构 (scripts/)
+## 🛠️ 脚本目录结构 (docs/scripts/)
 
 ```
-scripts/
+docs/scripts/
 ├── setup-dev.sh                   # 开发环境搭建
 ├── build.sh                       # 构建脚本
 ├── dev-start.sh                   # 开发环境启动

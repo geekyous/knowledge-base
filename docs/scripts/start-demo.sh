@@ -11,13 +11,13 @@
 #   5. 环境变量文件(.env)的自动生成
 #
 # 📖 使用方式:
-#   chmod +x scripts/start-demo.sh   # 首次使用需赋予执行权限
-#   ./scripts/start-demo.sh          # 一键启动所有服务
+#   chmod +x docs/scripts/start-demo.sh   # 首次使用需赋予执行权限
+#   ./docs/scripts/start-demo.sh          # 一键启动所有服务
 #
 # 🔗 相关文件:
 #   - docker-compose.yml    Docker 服务编排配置
 #   - .env.example          环境变量模板
-#   - scripts/health-check.sh   服务健康检查脚本
+#   - docs/scripts/health-check.sh   服务健康检查脚本
 #
 # ============================================
 
