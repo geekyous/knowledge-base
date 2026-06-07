@@ -332,7 +332,7 @@ knowledge-base/
 ├── ai-service/            # Python AI 服务
 ├── deploy/nginx/          # Nginx 部署配置
 ├── docs/                  # 项目文档
-│   ├── constitution.md    # ← 本文件
+│   ├── constitution.md    # ← ·本文件
 │   ├── 10-java-concepts.md # Java 概念教学（从代码中迁移）
 │   ├── features/          # 功能设计文档
 │   └── scripts/           # 开发脚本
