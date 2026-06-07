@@ -336,7 +336,7 @@ export default router
 ### 包结构规范
 
 ```
-com.company.kb
+com.geekyous.kb
 ├── config/          # 配置类
 ├── controller/      # 控制器
 ├── service/         # 服务接口

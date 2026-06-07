@@ -12,7 +12,7 @@
         <relativePath/>
     </parent>
 
-    <groupId>com.company</groupId>
+    <groupId>com.geekyous</groupId>
     <artifactId>knowledge-base</artifactId>
     <version>1.0.0</version>
     <name>Knowledge Base</name>
@@ -218,7 +218,7 @@
                         <artifactId>exec-maven-plugin</artifactId>
                         <version>3.1.0</version>
                         <configuration>
-                            <mainClass>com.company.kb.utils.JasyptEncryptUtil</mainClass>
+                            <mainClass>com.geekyous.kb.utils.JasyptEncryptUtil</mainClass>
                         </configuration>
                     </plugin>
                 </plugins>
