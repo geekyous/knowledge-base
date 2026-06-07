@@ -113,10 +113,12 @@ def generate_answer(
 
     # 尝试使用真实 LLM
     # LLM_PROVIDER 环境变量决定使用哪个 LLM 服务商
-    provider = os.getenv("LLM_PROVIDER", "openai").lower()
+    provider = os.getenv("LLM_PROVIDER", "ollama").lower()
 
     # 根据配置的 Provider 和是否有 API Key 来决定调用路径
-    if provider == "openai" and os.getenv("OPENAI_API_KEY"):
+    if provider == "ollama":
+        return _ollama_generate(question, context, sources)
+    elif provider == "openai" and os.getenv("OPENAI_API_KEY"):
         return _openai_generate(question, context, sources)
     elif provider == "anthropic" and os.getenv("ANTHROPIC_API_KEY"):
         return _anthropic_generate(question, context, sources)
@@ -235,8 +237,120 @@ def _mock_generate(question: str, sources: List[Dict] = None) -> Dict[str, Any]:
 
 
 # =====================================================
-# 真实 LLM 调用
+# Ollama 本地 LLM —— 学习 LLM 的最佳起点
 # =====================================================
+# 什么是 Ollama？
+#   Ollama 是一个本地 LLM 运行框架，让你在自己的电脑上运行开源大模型。
+#   它提供 OpenAI 兼容的 HTTP API，无需 API Key，无需网络连接。
+#
+# 为什么从 Ollama 开始学习？
+#   1. 零成本：完全本地运行，不按 Token 计费
+#   2. 隐私安全：数据不离开本机
+#   3. OpenAI 兼容 API：学会的调用方式可直接迁移到云端 API
+#   4. 模型丰富：qwen2、llama3、mistral、gemma 等主流模型都支持
+#
+# Ollama API 调用流程：
+#   HTTP POST http://ollama:11434/api/chat
+#   ┌─────────────────────────────────────────────────┐
+#   │  请求体:                                        │
+#   │  {                                              │
+#   │    "model": "qwen2",           ← 使用哪个模型   │
+#   │    "messages": [                                │
+#   │      {"role": "system", "content": "..."},      │
+#   │      {"role": "user", "content": "..."}         │
+#   │    ],                                           │
+#   │    "stream": false              ← 等待完整响应   │
+#   │  }                                              │
+#   └─────────────────────────────────────────────────┘
+#                      ↓
+#   ┌─────────────────────────────────────────────────┐
+#   │  响应体:                                        │
+#   │  {                                              │
+#   │    "message": {                                 │
+#   │      "role": "assistant",                       │
+#   │      "content": "根据文档内容..."                │
+#   │    }                                            │
+#   │  }                                              │
+#   └─────────────────────────────────────────────────┘
+
+
+def _ollama_generate(question: str, context: str, sources: List[Dict]) -> Dict[str, Any]:
+    """
+    使用 Ollama 本地 LLM 生成回答
+
+    Ollama 提供 OpenAI 兼容的 HTTP API，无需 API Key。
+    这是最适合学习 LLM 的方式：所有推理都在本地完成。
+
+    支持的模型（通过 docker exec -it <容器> ollama pull <模型名> 下载）：
+        - qwen2:7b      — 阿里通义千问，中文能力强（推荐）
+        - llama3:8b     — Meta Llama 3，英文能力强
+        - mistral:7b    — Mistral AI，推理速度快
+        - gemma2:9b     — Google Gemma 2，均衡表现
+
+    Args:
+        question: 用户问题
+        context: 检索到的文档上下文
+        sources: 来源文档列表
+
+    Returns:
+        Dict[str, Any]: LLM 生成的回答
+    """
+    import json
+    import urllib.request
+    import urllib.error
+
+    base_url = os.getenv("OLLAMA_BASE_URL", "http://ollama:11434")
+    model = os.getenv("OLLAMA_CHAT_MODEL", "qwen2")
+
+    # 构造用户消息（与 OpenAI 调用相同的 RAG Prompt 策略）
+    user_message = f"问题：{question}\n\n相关文档：\n{context}\n\n请基于以上文档内容回答。" if context else question
+
+    try:
+        # 构造 Ollama Chat API 请求（OpenAI 兼容格式）
+        payload = {
+            "model": model,
+            "messages": [
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": user_message},
+            ],
+            "stream": False,  # 等待完整响应（非流式）
+            "options": {
+                "temperature": 0.3,  # 低温度：更确定性的回答
+                "num_predict": 1000,  # 最大生成 Token 数
+            },
+        }
+
+        req = urllib.request.Request(
+            f"{base_url}/api/chat",
+            data=json.dumps(payload).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+
+        # 发送请求并读取响应
+        with urllib.request.urlopen(req, timeout=120) as resp:
+            result = json.loads(resp.read().decode("utf-8"))
+
+        answer = result.get("message", {}).get("content", "")
+
+        if not answer:
+            logger.warning("Ollama 返回空回答，降级到 Mock 模式")
+            return _mock_generate(question, sources)
+
+        return {
+            "answer": answer,
+            "sources": sources or [],
+            "followUps": [],
+        }
+
+    except urllib.error.URLError as e:
+        # Ollama 服务不可用（可能模型未下载或服务未启动）
+        logger.error(f"Ollama 调用失败（服务不可用）: {e}")
+        logger.info("提示：请确认 Ollama 服务已启动且模型已下载")
+        return _mock_generate(question, sources)
+    except Exception as e:
+        logger.error(f"Ollama 调用失败: {e}")
+        return _mock_generate(question, sources)
 
 # System Prompt（系统提示词）—— Prompt Engineering 的核心
 #

@@ -20,7 +20,7 @@ spring:
   # JPA 配置
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: none
     show-sql: false
     properties:
       hibernate:
@@ -107,9 +107,11 @@ springdoc:
     path: /swagger-ui.html
     tags-sorter: alpha
     operations-sorter: alpha
-  show-actuator: false
+  show-actuator: true
 
 # 管理端点配置
+# Actuator 端点路径会受到 server.servlet.context-path 影响
+# 实际路径为 /api/actuator/health
 management:
   endpoints:
     web:
