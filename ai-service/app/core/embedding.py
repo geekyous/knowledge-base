@@ -87,62 +87,107 @@ def embed_text(text: str) -> List[float]:
     """
     将单条文本转化为向量
 
-    这是本模块的核心函数，调用方不需要关心底层使用的是真实模型还是伪向量。
+    优先级：
+        1. Ollama Embedding API（如果 LLM_PROVIDER=ollama 且 Ollama 可用）
+        2. sentence-transformers 本地模型（如果已安装）
+        3. 伪向量（降级兜底）
 
     Args:
         text: 输入文本（如用户问题或文档标题+内容）
 
     Returns:
-        List[float]: 归一化后的 384 维浮点向量
-        例如: [0.12, -0.34, 0.56, ..., 0.78]
-
-    Example:
-        >>> vector = embed_text("年假怎么申请")
-        >>> len(vector)
-        384
-        >>> # 归一化向量的模长应该为 1.0
-        >>> sum(x**2 for x in vector) ** 0.5
-        1.0
+        List[float]: 归一化后的浮点向量
     """
+    # 优先使用 Ollama Embedding（学习环境推荐）
+    provider = __import__("os").getenv("LLM_PROVIDER", "ollama").lower()
+    if provider == "ollama":
+        ollama_vector = _ollama_embed(text)
+        if ollama_vector is not None:
+            return ollama_vector
+
+    # 其次使用 sentence-transformers 本地模型
     model = _get_model()
     if model is not None:
-        # 使用真实模型进行向量化
-        # model.encode() 返回 numpy 数组，.tolist() 转为 Python 列表
         vector = model.encode(text).tolist()
-    else:
-        # 降级到伪向量模式（演示/开发环境）
-        vector = _pseudo_embed(text)
-    return vector
+        return vector
+
+    # 最后降级到伪向量
+    return _pseudo_embed(text)
 
 
 def embed_texts(texts: List[str]) -> List[List[float]]:
     """
     批量向量化 —— 将多条文本同时转为向量
 
-    为什么需要批量接口？
-        1. 性能优化：模型的批量编码比逐条编码效率高很多
-        2. GPU 利用率：批量处理能更好地利用 GPU 并行计算能力
-        3. 减少开销：避免反复的模型前向传播准备/清理
-
     Args:
         texts: 输入文本列表
 
     Returns:
-        List[List[float]]: 向量列表，每个元素是 384 维向量
-
-    Example:
-        >>> vectors = embed_texts(["年假怎么申请", "加班制度"])
-        >>> len(vectors)
-        2
-        >>> len(vectors[0])
-        384
+        List[List[float]]: 向量列表
     """
     model = _get_model()
     if model is not None:
-        # 真实模型支持批量编码，内部会自动优化批处理
         return model.encode(texts).tolist()
-    # 伪向量模式：逐条生成
-    return [_pseudo_embed(t) for t in texts]
+    # Ollama 或伪向量模式：逐条生成
+    return [embed_text(t) for t in texts]
+
+
+def _ollama_embed(text: str) -> Optional[List[float]]:
+    """
+    使用 Ollama Embedding API 进行向量化
+
+    Ollama 的 Embedding API：
+        POST http://ollama:11434/api/embed
+        {"model": "nomic-embed-text", "input": "文本"}
+
+    推荐的 Embedding 模型：
+        - nomic-embed-text: 768 维，英文+中文，轻量高效
+        - mxbai-embed-large: 1024 维，更精确
+        - all-minilm: 384 维，与本地 sentence-transformers 兼容
+
+    注意：不同模型的向量维度不同！
+        使用新模型时需要同步更新 VECTOR_SIZE 和 Qdrant 集合配置。
+
+    Args:
+        text: 输入文本
+
+    Returns:
+        Optional[List[float]]: 向量，失败返回 None（降级到其他模式）
+    """
+    import json
+    import urllib.request
+    import urllib.error
+    import os
+
+    base_url = os.getenv("OLLAMA_BASE_URL", "http://ollama:11434")
+    model = os.getenv("OLLAMA_EMBED_MODEL", "nomic-embed-text")
+
+    try:
+        payload = {
+            "model": model,
+            "input": text,
+        }
+
+        req = urllib.request.Request(
+            f"{base_url}/api/embed",
+            data=json.dumps(payload).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            result = json.loads(resp.read().decode("utf-8"))
+
+        # Ollama embed API 返回 {"embeddings": [[...]]}
+        embeddings = result.get("embeddings", [])
+        if embeddings and len(embeddings) > 0:
+            return embeddings[0]
+
+        return None
+
+    except Exception as e:
+        # Ollama 不可用或模型未下载，返回 None 触发降级
+        return None
 
 
 def _pseudo_embed(text: str) -> List[float]:
