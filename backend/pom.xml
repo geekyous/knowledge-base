@@ -155,6 +155,13 @@
             <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <!-- Jasypt - 配置文件密码加密 -->
+        <dependency>
+            <groupId>com.github.ulisesbocchio</groupId>
+            <artifactId>jasypt-spring-boot-starter</artifactId>
+            <version>3.0.5</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -195,4 +202,27 @@
             </plugin>
         </plugins>
     </build>
+
+    <!--
+        加密工具 profile：
+        用法：mvn exec:java -Pencrypt -Dexec.args="encrypt <明文>" -Djasypt.encryptor.password=<主密钥>
+        示例：mvn exec:java -Pencrypt -Dexec.args="encrypt root123" -Djasypt.encryptor.password=mykey
+    -->
+    <profiles>
+        <profile>
+            <id>encrypt</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>3.1.0</version>
+                        <configuration>
+                            <mainClass>com.company.kb.utils.JasyptEncryptUtil</mainClass>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
