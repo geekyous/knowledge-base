@@ -235,14 +235,144 @@ docker-compose logs -f
 docker-compose ps
 ```
 
+## 🖥️ 生产服务器配置
+
+### 服务资源消耗分析
+
+系统共 8 个 Docker 服务，各服务内存占用估算：
+
+| 服务 | 内存占用 | 说明 |
+|------|---------|------|
+| Ollama（qwen2 + embed 模型） | 4-8 GB | 最大的资源消耗者，模型加载到内存 |
+| Elasticsearch | 1-2 GB | JVM 堆，可通过 `ES_JAVA_OPTS` 调节 |
+| MySQL | 1-2 GB | `innodb_buffer_pool_size` 决定 |
+| Spring Boot 后端 | 1-2 GB | JVM 堆，`-Xmx` 参数控制 |
+| AI 服务（FastAPI） | 0.5-1 GB | Python 进程 + LangChain |
+| Qdrant | 0.5-1 GB | 向量数据量决定 |
+| Redis | 0.5 GB | 缓存数据量决定 |
+| Nginx | ~50 MB | 极轻量 |
+| **合计** | **~12-16 GB** | 不含操作系统开销 |
+
+### 磁盘空间明细
+
+| 数据类型 | 预估大小 | 存储位置 |
+|----------|---------|---------|
+| Ollama 模型（qwen2 ~4GB + nomic-embed-text ~300MB） | ~5 GB | `ollama-data` volume |
+| MySQL 数据库 | 1-10 GB | `mysql-data` volume |
+| Elasticsearch 索引 | 1-5 GB | `elasticsearch-data` volume |
+| Qdrant 向量数据 | 1-5 GB | `qdrant-data` volume |
+| Docker 镜像 | ~5 GB | `/var/lib/docker` |
+| 日志 + 临时文件 | 2-5 GB | 宿主机 |
+| **合计** | **~20-35 GB** | 建议预留 50% 余量 |
+
+### 方案一：单机部署（本地 LLM）
+
+> 适用场景：小团队 / 内部系统，≤50 并发用户，数据不出内网。
+
+| 配置项 | 最低要求 | 推荐配置 |
+|--------|---------|---------|
+| **CPU** | 4 核 | **8 核**（Ollama 推理是 CPU 密集型） |
+| **内存** | 16 GB | **32 GB** |
+| **磁盘** | 100 GB SSD | **200 GB SSD** |
+| **GPU** | 无（CPU 推理，响应慢） | NVIDIA GPU（4GB+ 显存，如 T4 / 4060） |
+
+⚠️ 16 GB 是"勉强能跑"，32 GB 才有余量应对并发和 GC。无 GPU 时 qwen2 单次推理可能需要 10-30 秒。
+
+### 方案二：单机部署（云端 LLM API）⭐ 推荐
+
+> 适用场景：大多数生产环境。去掉 Ollama，LLM 推理交给云端 API，大幅降低硬件需求。
+
+| 配置项 | 要求 | 说明 |
+|--------|------|------|
+| **CPU** | 4 核 | 足够运行其余 7 个服务 |
+| **内存** | **8 GB** | 去掉 Ollama 后内存需求减半 |
+| **磁盘** | 50 GB SSD | 无模型文件，磁盘需求也减半 |
+| **GPU** | 不需要 | LLM 推理在云端完成 |
+
+配置方式：`.env` 中设置 `LLM_PROVIDER=openai`（或 `anthropic`），并在 `docker-compose.yml` 中注释掉 `ollama` 服务。
+
+### 方案三：分离部署（中大规模生产）
+
+> 适用场景：>50 并发用户，需要高可用。
+
+将中间件拆分到独立服务器或云托管服务：
+
+| 组件 | 部署方式 | 推荐配置 |
+|------|---------|---------|
+| **应用服务器**（Nginx + Backend + AI Service） | ECS / 自建 | 4C8G |
+| **MySQL** | 云 RDS 或独立服务器 | 2C4G，SSD |
+| **Redis** | 云 Redis 或独立服务器 | 1G 主从版 |
+| **Elasticsearch** | 独立服务器 | 4C8G，SSD |
+| **Qdrant** | 独立服务器 | 2C4G |
+| **LLM** | 云端 API（OpenAI / Anthropic） | 按调用量付费 |
+
+### 云服务器成本参考
+
+| 方案 | 配置 | 月成本参考（国内云厂商） |
+|------|------|------------------------|
+| 学习/开发 | 4C8G（去掉 Ollama） | ~200-400 元/月 |
+| 小团队生产（云端 API） | 4C8G | ~300-500 元/月 + API 调用费 |
+| 企业生产（本地 LLM） | 8C32G + GPU | ~1000-2000 元/月 |
+| 分离部署（高可用） | 多台服务器 | ~2000-5000 元/月 |
+
+> 💡 以上为 2026 年国内主流云厂商（阿里云/腾讯云/华为云）的参考价格，实际以官网报价为准。
+
+### 生产环境性能调优
+
+#### JVM 参数（Backend）
+
+```bash
+# docker-compose.yml 中 backend 环境变量添加
+JAVA_OPTS: "-Xms1g -Xmx2g -XX:+UseG1GC"
+```
+
+#### Elasticsearch 堆内存
+
+```yaml
+# 从 512m 提升到 1-2g
+environment:
+  - "ES_JAVA_OPTS=-Xms1g -Xmx1g"    # 生产建议 1-2g，不超过物理内存 50%
+```
+
+#### MySQL 关键参数
+
+```yaml
+# docker-compose.yml 中 mysql command 追加
+command: >
+  --character-set-server=utf8mb4
+  --collation-server=utf8mb4_unicode_ci
+  --innodb-buffer-pool-size=1G       # 建议物理内存的 50-70%
+  --max-connections=200
+  --innodb-log-file-size=256M
+```
+
+#### Ollama GPU 加速
+
+```yaml
+# docker-compose.yml 中 ollama 服务添加 GPU 支持
+ollama:
+  image: ollama/ollama:latest
+  deploy:
+    resources:
+      reservations:
+        devices:
+          - driver: nvidia
+            count: 1
+            capabilities: [gpu]
+```
+
 ## ☁️ 云服务部署
 
 ### 阿里云部署
 
 #### 1. ECS 配置
-- **实例规格**: 4核8G
-- **系统**: Ubuntu 22.04
-- **存储**: 100GB SSD
+
+根据上方「生产服务器配置」选择合适方案：
+
+| 方案 | ECS 规格 | 系统 | 存储 |
+|------|---------|------|------|
+| 云端 API（推荐） | 2核4G ~ 4核8G | Ubuntu 22.04 | 50-100 GB SSD |
+| 本地 LLM | 8核32G + GPU | Ubuntu 22.04 | 200 GB SSD |
 
 #### 2. RDS MySQL
 - **规格**: 2核4G
@@ -711,5 +841,5 @@ curl http://localhost:8080/actuator/metrics
 
 ---
 
-**文档版本：** v1.0
-**最后更新：** 2026-05-31
+**文档版本：** v2.0
+**最后更新：** 2026-06-07
