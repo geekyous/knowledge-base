@@ -40,6 +40,9 @@ import type { User, LoginRequest, LoginResponse } from '@/types'
 // 导入封装好的 HTTP 请求工具，用于调用后端 API
 import { http } from '@/utils/request'
 
+// 导入 JSEncrypt — 前端 RSA 加密库，用于密码加密传输
+import JSEncrypt from 'jsencrypt'
+
 /**
  * defineStore() 定义一个 Pinia Store
  *
@@ -135,14 +138,32 @@ export const useUserStore = defineStore('user', () => {
    * @returns Promise - 登录 API 的响应
    *
    * 登录流程：
-   * 1. 调用后端 /v1/auth/login 接口
-   * 2. 从响应中提取 Token 和用户信息
-   * 3. 分别存储 Token 和用户信息
+   * 1. 调用后端 /v1/auth/public-key 获取 RSA 公钥
+   * 2. 使用公钥加密密码（防止明文传输）
+   * 3. 调用后端 /v1/auth/login 接口，发送加密后的密码
+   * 4. 从响应中提取 Token 和用户信息
+   * 5. 分别存储 Token 和用户信息
    *
    * TypeScript 泛型 http.post<LoginResponse> 确保响应数据的类型安全。
    */
   const login = async (credentials: LoginRequest) => {
-    const res = await http.post<LoginResponse>('/v1/auth/login', credentials)
+    // 步骤 1: 获取 RSA 公钥
+    const keyRes = await http.get<{ publicKey: string; algorithm: string }>('/v1/auth/public-key')
+    const { publicKey } = keyRes.data
+
+    // 步骤 2: 使用公钥加密密码
+    const encryptor = new JSEncrypt()
+    encryptor.setPublicKey(publicKey)
+    const encryptedPassword = encryptor.encrypt(credentials.password)
+    if (!encryptedPassword) {
+      throw new Error('密码加密失败，请重试')
+    }
+
+    // 步骤 3: 发送加密后的登录请求
+    const res = await http.post<LoginResponse>('/v1/auth/login', {
+      username: credentials.username,
+      password: encryptedPassword
+    })
     const { token: newToken, user } = res.data
 
     // 保存 Token 和用户信息
