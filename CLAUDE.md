@@ -15,7 +15,11 @@
 - Controller 不含业务逻辑，Service 不含 HTTP 语义
 - DTO 不直接暴露 Entity，Response 过滤敏感字段
 - 构造器注入，禁止 `@Autowired` 字段注入
-- commit 格式：`type(scope): 中文描述`（feat/fix/refactor/docs/style/chore）
+- **所有 @RequestBody 必须搭配 @Valid，Controller 类标注 @Validated**
+- **禁止用 Entity 做 @RequestBody，必须创建 Request DTO**
+- Pydantic 字段必须用 Field() 约束值域
+- 前端表单必须配置 :rules + maxlength
+- 异常统一通过 GlobalExceptionHandler 处理
 
 ## 安全底线
 
@@ -23,6 +27,18 @@
 - 密码传输使用 RSA 加密，禁止明文
 - 响应中 email/phone 必须脱敏
 - 禁止提交 `.env`，禁止硬编码密码
+- 禁止在日志中输出密码、Token、API Key
+
+## 日志规范
+
+- 使用 SLF4J / logging，禁止 System.out.println / print()
+- 日志包含上下文：`logger.info("用户登录: username={}", username)`
+- 禁止在循环中打 DEBUG 日志
+
+## Git 规范
+
+- 分支命名：`feature/<描述>`、`fix/<描述>`、`refactor/<描述>`
+- commit 格式：`type(scope): 中文描述`
 
 ## 变更检查
 

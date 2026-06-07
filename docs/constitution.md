@@ -65,13 +65,72 @@ public AuthService(UserRepository repo, PasswordEncoder encoder) { ... }
 private UserRepository repo;
 ```
 
-### 2.4 命名规范
+### 2.4 参数校验
+
+**所有接口入参必须校验，无一例外。**
+
+#### 后端（Java）
+
+- `@RequestBody` 参数必须搭配 `@Valid` 注解
+- Controller 类必须标注 `@Validated`（激活 @RequestParam / @PathVariable 级别校验）
+- DTO 字段必须使用 JSR 303 注解：`@NotBlank`、`@NotNull`、`@Size`、`@Min`、`@Max`、`@Pattern`
+- 分页参数 `page` ≥ 1，`size` 在 1-100 之间
+- **禁止**直接用 Entity 作为 `@RequestBody`，必须创建专用 Request DTO
+
+```java
+// ✅ 正确
+public ApiResponse<Document> create(@RequestBody @Valid CreateDocumentRequest request)
+
+// ❌ 禁止
+public ApiResponse<Document> create(@RequestBody Document document)
+```
+
+#### AI 服务（Python）
+
+- Pydantic 模型字段必须使用 `Field()` 约束值域
+- 字符串字段必须设定 `min_length` 和 `max_length`
+- 数值字段必须设定 `ge`（最小值）和 `le`（最大值）
+
+```python
+# ✅ 正确
+question: str = Field(min_length=1, max_length=2000)
+limit: int = Field(default=5, ge=1, le=100)
+
+# ❌ 禁止
+question: str
+limit: int = 5
+```
+
+#### 前端（Vue）
+
+- 所有表单必须配置 `:rules` 校验规则
+- 文本输入框必须设置 `maxlength` 属性
+- 提交前必须调用 `formRef.validate()`
+
+### 2.5 异常处理
+
+- 所有异常通过 `GlobalExceptionHandler` 统一拦截，返回 `ApiResponse` 格式
+- **禁止**在 Controller 中 try-catch 后返回自定义错误格式
+- 业务异常使用 `RuntimeException`（后续演进为自定义 `BusinessException`）
+- 校验异常返回 HTTP 400 + 具体字段错误信息
+- 业务异常返回 HTTP 500 + 用户友好的中文提示
+
+### 2.6 命名规范
 
 | 语言 | 类/组件 | 方法/函数 | 变量 | 文件 |
 |------|---------|-----------|------|------|
 | Java | PascalCase | camelCase | camelCase | PascalCase.java |
 | Vue/TS | PascalCase | camelCase | camelCase | PascalCase.vue / camelCase.ts |
 | Python | PascalCase | snake_case | snake_case | snake_case.py |
+
+### 2.7 API 设计规范
+
+- URL 使用小写 + 短横线：`/api/v1/user-profiles`（不是 `/api/v1/UserProfiles`）
+- 资源用复数名词：`/documents`、`/categories`（不是 `/document`）
+- 操作用 HTTP 方法表达：GET 查询、POST 创建、PUT 更新、DELETE 删除
+- 分页参数统一：`page`（从 1 开始）、`size`（默认 20，最大 100）
+- 列表接口返回 `Page<T>` 格式（含 total、items）
+- 所有接口返回统一的 `ApiResponse<T>` 包装，响应码 200 表示成功
 
 ---
 
@@ -110,9 +169,91 @@ private UserRepository repo;
 
 ---
 
-## 四、Git 规范
+## 四、日志规范
 
-### 4.1 分支命名
+### 4.1 日志级别
+
+| 级别 | 使用场景 | 示例 |
+|------|----------|------|
+| ERROR | 影响功能的异常，需要立即处理 | 数据库连接失败、外部 API 超时 |
+| WARN | 潜在问题，不影响主流程 | 配置缺失使用默认值、RSA 解密失败降级为明文 |
+| INFO | 关键业务节点 | 用户登录、文档创建、服务启动 |
+| DEBUG | 调试信息，生产环境不输出 | SQL 参数、请求体详情 |
+
+### 4.2 日志规范
+
+- ✅ 使用 SLF4J（后端）和 `logging`（Python），**禁止** `System.out.println` / `print()`
+- ✅ 日志包含上下文信息：`logger.info("用户登录: username={}", username)`
+- ❌ **禁止**在日志中输出密码、Token、API Key 等敏感信息
+- ❌ **禁止**在循环中打印 DEBUG 日志（性能杀手）
+
+---
+
+## 五、数据库规范
+
+### 5.1 表命名
+
+- 表名使用小写 + 下划线，前缀 `kb_`：`kb_users`、`kb_documents`
+- 字段名使用小写 + 下划线：`created_at`、`category_id`
+- 关联字段命名：`<关联表>_id`：`author_id`、`parent_id`
+
+### 5.2 必备字段
+
+每张业务表必须包含：
+
+```sql
+id          BIGINT AUTO_INCREMENT PRIMARY KEY  -- 自增主键
+created_at  DATETIME DEFAULT CURRENT_TIMESTAMP -- 创建时间
+updated_at  DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP -- 更新时间
+```
+
+### 5.3 软删除
+
+- 业务数据使用软删除（`deleted_at` 字段），不物理删除
+- 查询时必须过滤 `WHERE deleted_at IS NULL`
+- 物理删除仅在数据清理/归档任务中使用
+
+### 5.4 数据库迁移
+
+- DDL 变更通过 SQL 迁移脚本管理（`backend/src/main/resources/db/migration/`）
+- 迁移脚本命名：`V<版本号>__<描述>.sql`，如 `V2__add_user_phone.sql`
+- 迁移脚本只增不删（生产数据安全）
+
+---
+
+## 六、测试底线
+
+### 6.1 必须测试的场景
+
+| 层级 | 必须覆盖 |
+|------|----------|
+| Controller | 参数校验（空值、越界、格式错误）返回 400 |
+| Service | 核心业务逻辑（登录成功/失败、文档创建/更新） |
+| Service | 边界条件（分页 page=0、size=0） |
+| Service | 异常分支（用户不存在、密码错误、账号禁用） |
+
+### 6.2 测试命名
+
+```java
+// Java: 方法名_场景_预期结果
+@Test
+void login_whenUserNotFound_shouldThrowException() { ... }
+
+// Python: test_方法名_场景_预期结果
+def test_ask_with_empty_question_should_return_400():
+```
+
+### 6.3 禁止事项
+
+- ❌ 禁止提交注释掉 `@Test` 的测试
+- ❌ 禁止为了通过 CI 而修改断言
+- ❌ 禁止测试中硬编码外部依赖（数据库、API）
+
+---
+
+## 七、Git 规范
+
+### 7.1 分支命名
 
 ```
 feature/<描述>    — 新功能开发
@@ -121,7 +262,7 @@ refactor/<描述>   — 代码重构
 docs/<描述>       — 文档更新
 ```
 
-### 4.2 Commit 格式
+### 7.2 Commit 格式
 
 ```
 type(scope): 中文描述
@@ -136,7 +277,7 @@ type(scope): 中文描述
 | style | 格式 | `style(lint): 统一代码缩进` |
 | chore | 杂项 | `chore(deps): 升级 Spring Boot 到 3.2.4` |
 
-### 4.3 提交原则
+### 7.3 提交原则
 
 - 一个 commit 做一件事，不混合不相关的变更
 - 不提交无法编译的代码
@@ -144,7 +285,7 @@ type(scope): 中文描述
 
 ---
 
-## 五、变更检查清单
+## 八、变更检查清单
 
 每次修改以下文件时，**必须执行对应的验证命令**：
 
@@ -159,7 +300,7 @@ type(scope): 中文描述
 
 ---
 
-## 六、项目目录约定
+## 九、项目目录约定
 
 ```
 knowledge-base/
@@ -180,6 +321,6 @@ knowledge-base/
 
 ---
 
-**文档版本：** v1.0
+**文档版本：** v2.0
 **最后更新：** 2026-06-07
 **适用范围：** 所有开发者和 AI 助手
