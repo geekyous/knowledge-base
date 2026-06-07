@@ -114,7 +114,7 @@ backend/
 ├── src/
 │   ├── main/
 │   │   ├── java/
-│   │   │   └── com/company/kb/
+│   │   │   └── com/geekyous/kb/
 │   │   │       ├── KnowledgeBaseApplication.java  # 启动类
 │   │   │       ├── config/                         # 配置类
 │   │   │       │   ├── SecurityConfig.java        # 安全配置
@@ -185,7 +185,7 @@ backend/
 │   │               └── V1__init_schema.sql
 │   └── test/
 │       └── java/
-│           └── com/company/kb/
+│           └── com/geekyous/kb/
 │               ├── service/                 # 服务测试
 │               ├── controller/             # 控制器测试
 │               └── repository/              # 数据访问测试

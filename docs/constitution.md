@@ -287,6 +287,8 @@ type(scope): 中文描述
 
 ## 八、变更检查清单
 
+### 8.1 构建验证
+
 每次修改以下文件时，**必须执行对应的验证命令**：
 
 | 变更文件 | 必须执行 |
@@ -297,6 +299,27 @@ type(scope): 中文描述
 | `backend/src/main/resources/application.yml` | `mvn compile` |
 | 移动/重命名文件或目录 | `grep -rn "旧路径" --include="*.java" --include="*.yml" --include="*.md" --include="*.sh"` |
 | `.env.example` | 与 `.env` 对比，确认字段一致 |
+
+### 8.2 文档同步
+
+**每次代码变更必须检查关联文档是否需要同步更新，不得遗漏。**
+
+| 变更类型 | 需要同步更新的文档 |
+|----------|-------------------|
+| 新增 / 修改 / 删除 API 接口 | `docs/features/` 下对应的功能设计文档、接口参数/返回值说明 |
+| 新增 / 移除 Maven 依赖 | `backend/pom.xml` 注释、`docs/` 架构说明（如引入新中间件） |
+| 修改 `application.yml` 配置项 | `.env.example` 对应字段、`docs/features/` 配置说明 |
+| 修改 `docker-compose.yml` 服务 | `docs/` 部署文档、`.env.example` 环境变量 |
+| 新增工具类 / 配置类 | `CLAUDE.md` 变更检查表（如有新的验证命令）、`docs/constitution.md` 对应章节 |
+| 修改宪法规则 | `CLAUDE.md`（精简版）必须同步更新 |
+| 修改项目目录结构 | `docs/constitution.md` 九、项目目录约定 |
+| 新增安全机制 | `docs/constitution.md` 三、安全规范 |
+
+**原则：**
+
+- 代码变更是"因"，文档滞后是"债"，技术债必须当场清偿
+- 如果不确定是否影响文档，**宁可多检查也不要跳过**
+- commit 中应包含文档更新，或说明"本次变更无文档影响"
 
 ---
 
@@ -321,6 +344,6 @@ knowledge-base/
 
 ---
 
-**文档版本：** v2.0
+**文档版本：** v2.1
 **最后更新：** 2026-06-07
 **适用范围：** 所有开发者和 AI 助手

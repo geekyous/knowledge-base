@@ -545,7 +545,7 @@ JAVA_HOME=$(/usr/libexec/java_home -v 17) mvn -q dependency:build-classpath -Dmd
 JAVA_HOME=$(/usr/libexec/java_home -v 17) && \
 $JAVA_HOME/bin/java -cp "$(cat /tmp/kb-cp.txt):target/classes" \
   -Djasypt.encryptor.password=你的主密钥 \
-  com.company.kb.utils.JasyptEncryptUtil encrypt 密码明文
+  com.geekyous.kb.utils.JasyptEncryptUtil encrypt 密码明文
 
 # 输出示例：ENC(BM2F1Myec/dtnAO9xl1nAJ7...)
 ```

@@ -50,10 +50,10 @@ npm install
 
 #### 1. 创建用户实体
 
-**文件位置：** `backend/src/main/java/com/company/kb/entity/User.java`
+**文件位置：** `backend/src/main/java/com/geekyous/kb/entity/User.java`
 
 ```java
-package com.company.kb.entity;
+package com.geekyous.kb.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -176,12 +176,12 @@ public class User {
 
 #### 2. 创建用户Repository
 
-**文件位置：** `backend/src/main/java/com/company/kb/repository/UserRepository.java`
+**文件位置：** `backend/src/main/java/com/geekyous/kb/repository/UserRepository.java`
 
 ```java
-package com.company.kb.repository;
+package com.geekyous.kb.repository;
 
-import com.company.kb.entity.User;
+import com.geekyous.kb.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
@@ -217,10 +217,10 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
 #### 1. JWT工具类
 
-**文件位置：** `backend/src/main/java/com/company/kb/security/JwtProvider.java`
+**文件位置：** `backend/src/main/java/com/geekyous/kb/security/JwtProvider.java`
 
 ```java
-package com.company.kb.security;
+package com.geekyous.kb.security;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
@@ -306,13 +306,13 @@ public class JwtProvider {
 
 #### 2. 用户详情服务
 
-**文件位置：** `backend/src/main/java/com/company/kb/security/UserDetailsServiceImpl.java`
+**文件位置：** `backend/src/main/java/com/geekyous/kb/security/UserDetailsServiceImpl.java`
 
 ```java
-package com.company.kb.security;
+package com.geekyous.kb.security;
 
-import com.company.kb.entity.User;
-import com.company.kb.repository.UserRepository;
+import com.geekyous.kb.entity.User;
+import com.geekyous.kb.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.*;
 import org.springframework.stereotype.Service;
@@ -344,12 +344,12 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
 #### 3. 用户Principal
 
-**文件位置：** `backend/src/main/java/com/company/kb/security/UserPrincipal.java`
+**文件位置：** `backend/src/main/java/com/geekyous/kb/security/UserPrincipal.java`
 
 ```java
-package com.company.kb.security;
+package com.geekyous.kb.security;
 
-import com.company.kb.entity.User;
+import com.geekyous.kb.entity.User;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -424,10 +424,10 @@ public class UserPrincipal implements UserDetails {
 
 #### 4. JWT认证过滤器
 
-**文件位置：** `backend/src/main/java/com/company/kb/security/JwtAuthenticationFilter.java`
+**文件位置：** `backend/src/main/java/com/geekyous/kb/security/JwtAuthenticationFilter.java`
 
 ```java
-package com.company.kb.security;
+package com.geekyous.kb.security;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -496,13 +496,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 #### 5. 安全配置
 
-**文件位置：** `backend/src/main/java/com/company/kb/config/SecurityConfig.java`
+**文件位置：** `backend/src/main/java/com/geekyous/kb/config/SecurityConfig.java`
 
 ```java
-package com.company.kb.config;
+package com.geekyous.kb.config;
 
-import com.company.kb.security.JwtAuthenticationFilter;
-import com.company.kb.security.JwtProvider;
+import com.geekyous.kb.security.JwtAuthenticationFilter;
+import com.geekyous.kb.security.JwtProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Lazy;
@@ -560,19 +560,19 @@ public class SecurityConfig {
 
 #### 1. 认证服务
 
-**文件位置：** `backend/src/main/java/com/company/kb/service/AuthService.java`
+**文件位置：** `backend/src/main/java/com/geekyous/kb/service/AuthService.java`
 
 ```java
-package com.company.kb.service;
+package com.geekyous.kb.service;
 
-import com.company.kb.dto.LoginRequest;
-import com.company.kb.dto.LoginResponse;
-import com.company.kb.dto.RegisterRequest;
-import com.company.kb.entity.User;
-import com.company.kb.exception.*;
-import com.company.kb.repository.UserRepository;
-import com.company.kb.security.JwtProvider;
-import com.company.kb.security.UserPrincipal;
+import com.geekyous.kb.dto.LoginRequest;
+import com.geekyous.kb.dto.LoginResponse;
+import com.geekyous.kb.dto.RegisterRequest;
+import com.geekyous.kb.entity.User;
+import com.geekyous.kb.exception.*;
+import com.geekyous.kb.repository.UserRepository;
+import com.geekyous.kb.security.JwtProvider;
+import com.geekyous.kb.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
@@ -675,7 +675,7 @@ public class AuthService {
     /**
      * 获取当前用户信息
      */
-    public com.company.kb.dto.UserResponse getCurrentUser() {
+    public com.geekyous.kb.dto.UserResponse getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
 
@@ -688,7 +688,7 @@ public class AuthService {
     /**
      * 更新用户信息
      */
-    public com.company.kb.dto.UserResponse updateCurrentUser(com.company.kb.dto.UserUpdateRequest request) {
+    public com.geekyous.kb.dto.UserResponse updateCurrentUser(com.geekyous.kb.dto.UserUpdateRequest request) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
 
@@ -715,7 +715,7 @@ public class AuthService {
     /**
      * 修改密码
      */
-    public void changePassword(com.company.kb.dto.ChangePasswordRequest request) {
+    public void changePassword(com.geekyous.kb.dto.ChangePasswordRequest request) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
 
@@ -761,8 +761,8 @@ public class AuthService {
     /**
      * 映射User到UserResponse
      */
-    private com.company.kb.dto.UserResponse mapToUserResponse(User user) {
-        return com.company.kb.dto.UserResponse.builder()
+    private com.geekyous.kb.dto.UserResponse mapToUserResponse(User user) {
+        return com.geekyous.kb.dto.UserResponse.builder()
                 .id(user.getId())
                 .username(user.getUsername())
                 .email(user.getEmail())
@@ -777,14 +777,14 @@ public class AuthService {
 
 #### 2. 认证控制器
 
-**文件位置：** `backend/src/main/java/com/company/kb/controller/AuthController.java`
+**文件位置：** `backend/src/main/java/com/geekyous/kb/controller/AuthController.java`
 
 ```java
-package com.company.kb.controller;
+package com.geekyous.kb.controller;
 
-import com.company.kb.dto.*;
-import com.company.kb.service.AuthService;
-import com.company.kb.utils.Response;
+import com.geekyous.kb.dto.*;
+import com.geekyous.kb.service.AuthService;
+import com.geekyous.kb.utils.Response;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -1121,7 +1121,7 @@ describe('Auth API', () => {
 
 ### 后端文件
 ```
-backend/src/main/java/com/company/kb/
+backend/src/main/java/com/geekyous/kb/
 ├── config/
 │   └── SecurityConfig.java
 ├── controller/
