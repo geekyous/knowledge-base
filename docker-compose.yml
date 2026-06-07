@@ -86,6 +86,8 @@ services:
       - AI_SERVICE_URL=http://ai-service:8000
       # ---- JWT 密钥（⚠️ 生产环境务必通过 .env 设置强密钥）----
       - JWT_SECRET=${JWT_SECRET:-change-this-in-production}
+      # ---- Jasypt 主密钥（用于解密 ENC() 包裹的配置值）----
+      - JASYPT_ENCRYPTOR_PASSWORD=${JASYPT_ENCRYPTOR_PASSWORD}
     depends_on:
       mysql:
         condition: service_healthy
