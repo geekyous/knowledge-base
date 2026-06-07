@@ -239,6 +239,8 @@
             :rows="2"
             placeholder="输入您的问题..."
             resize="none"
+            maxlength="2000"
+            show-word-limit
             @keydown.enter.exact.prevent="sendMessage"
           />
           <!-- 发送按钮 -->

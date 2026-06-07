@@ -7,6 +7,7 @@ import com.company.kb.service.AuthService;
 import com.company.kb.utils.RsaUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.KeyPair;
@@ -47,7 +48,7 @@ public class AuthController {
      */
     @PostMapping("/login")
     @Operation(summary = "用户登录", description = "验证用户名和密码，返回 JWT Token 和用户信息")
-    public ApiResponse<LoginResponse> login(@RequestBody LoginRequest request) {
+    public ApiResponse<LoginResponse> login(@RequestBody @Valid LoginRequest request) {
         return ApiResponse.success(authService.login(request));
     }
 
