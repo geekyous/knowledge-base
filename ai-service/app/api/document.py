@@ -63,7 +63,7 @@ import logging
 from typing import Optional, List
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 # 导入向量存储操作
 from app.core.vector_store import index_document, search
@@ -96,11 +96,11 @@ class IndexRequest(BaseModel):
         category: 文档分类（如"人事制度"、"技术文档"）
         author: 文档作者
     """
-    document_id: int
-    title: str
-    content: str
-    category: Optional[str] = None
-    author: Optional[str] = None
+    document_id: int = Field(ge=1, description="文档 ID")
+    title: str = Field(min_length=1, max_length=255, description="文档标题")
+    content: str = Field(min_length=1, description="文档正文")
+    category: Optional[str] = Field(None, max_length=100, description="文档分类")
+    author: Optional[str] = Field(None, max_length=100, description="文档作者")
 
 
 class SearchRequest(BaseModel):
@@ -117,9 +117,9 @@ class SearchRequest(BaseModel):
         limit: 最多返回的结果数量（默认 5）
         score_threshold: 最低相似度分数（0.0-1.0，默认 0.3）
     """
-    query: str
-    limit: int = 5
-    score_threshold: float = 0.3
+    query: str = Field(min_length=1, max_length=500, description="搜索关键词")
+    limit: int = Field(default=5, ge=1, le=100, description="返回结果数量")
+    score_threshold: float = Field(default=0.3, ge=0.0, le=1.0, description="相似度阈值")
 
 
 class SearchResult(BaseModel):

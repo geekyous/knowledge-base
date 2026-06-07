@@ -47,6 +47,7 @@
           placeholder="搜索文档、问答..."
           size="large"
           clearable
+          maxlength="500"
           @keyup.enter="handleSearch"
         >
           <template #prefix>

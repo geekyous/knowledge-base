@@ -46,7 +46,7 @@ from typing import Optional, List
 from datetime import datetime
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 # 导入 RAG 核心流程函数
 from app.core.rag import retrieve_and_generate
@@ -84,8 +84,8 @@ class AskRequest(BaseModel):
             - 如果不提供，会创建新的对话
             - 这实现了多轮对话的基本功能
     """
-    question: str
-    conversationId: Optional[str] = None
+    question: str = Field(min_length=1, max_length=2000, description="用户的问题文本")
+    conversationId: Optional[str] = Field(None, max_length=64, description="对话 ID，提供则追加到已有对话")
 
 
 class SourceDocument(BaseModel):
@@ -256,7 +256,9 @@ async def ask_question(request: AskRequest):
 
 
 @router.get("/conversations")
-async def list_conversations(page: int = 1, pageSize: int = 20):
+async def list_conversations(
+        page: int = Field(default=1, ge=1, description="页码"),
+        pageSize: int = Field(default=20, ge=1, le=100, description="每页数量")):
     """
     获取对话列表（分页）
 

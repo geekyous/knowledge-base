@@ -5,6 +5,7 @@ import com.company.kb.entity.Category;
 import com.company.kb.repository.CategoryRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,6 +22,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/categories")
 @Tag(name = "分类管理", description = "文档分类的查询和树形结构接口")
+@Validated
 public class CategoryController {
 
     private final CategoryRepository categoryRepository;
