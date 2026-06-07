@@ -288,12 +288,15 @@ DB_HOST=localhost
 DB_PORT=3306
 DB_DATABASE=knowledge_base
 DB_USERNAME=root
-DB_PASSWORD=root123
+DB_PASSWORD=root123            # 支持明文或 ENC(密文) 格式
+
+# Jasypt 主密钥（用于解密 application.yml 中的 ENC() 配置值）
+JASYPT_ENCRYPTOR_PASSWORD=your-master-key
 
 # Redis 配置
 REDIS_HOST=localhost
 REDIS_PORT=6379
-REDIS_PASSWORD=
+REDIS_PASSWORD=                # 支持明文或 ENC(密文) 格式
 
 # Elasticsearch 配置
 ES_HOST=localhost
@@ -302,7 +305,7 @@ ES_USERNAME=
 ES_PASSWORD=
 
 # JWT 配置
-JWT_SECRET=your-secret-key-here
+JWT_SECRET=your-secret-key-here  # 支持明文或 ENC(密文) 格式
 JWT_EXPIRATION=86400
 
 # AI 服务配置
