@@ -5,8 +5,12 @@ import com.company.kb.dto.LoginRequest;
 import com.company.kb.dto.LoginResponse;
 import com.company.kb.entity.User;
 import com.company.kb.repository.UserRepository;
+import com.company.kb.utils.RsaUtil;
+import com.company.kb.utils.SensitiveFieldUtil;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.security.KeyPair;
 
 /**
  * 认证服务层（Authentication Service）— 处理用户登录认证逻辑
@@ -61,22 +65,22 @@ public class AuthService {
     /** JWT 配置类 — 用于生成认证 Token */
     private final JwtConfig jwtConfig;
 
+    /** RSA 密钥对 — 用于解密前端加密的密码 */
+    private final KeyPair rsaKeyPair;
+
     /**
      * 构造器注入所有依赖。
-     *
-     * <p>Spring 在创建 AuthService Bean 时，会自动从容器中找到并注入
-     * UserRepository、PasswordEncoder、JwtConfig 的实现。
-     * 这是<b>依赖注入（Dependency Injection, DI）</b>的核心原理：
-     * 对象不自己创建依赖，而是由容器提供。</p>
      *
      * @param userRepository  用户 Repository
      * @param passwordEncoder 密码编码器（由 SecurityConfig 中的 @Bean 方法提供）
      * @param jwtConfig       JWT 工具类
+     * @param rsaKeyPair      RSA 密钥对（由 RsaKeyConfig 生成）
      */
-    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtConfig jwtConfig) {
+    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtConfig jwtConfig, KeyPair rsaKeyPair) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtConfig = jwtConfig;
+        this.rsaKeyPair = rsaKeyPair;
     }
 
     /**
@@ -102,14 +106,14 @@ public class AuthService {
      */
     public LoginResponse login(LoginRequest request) {
         // 步骤 1: 根据用户名查找用户
-        // orElseThrow() 如果 Optional 为空则抛出异常
         User user = userRepository.findByUsername(request.getUsername())
                 .orElseThrow(() -> new RuntimeException("用户名或密码错误"));
 
-        // 步骤 2: 验证密码
-        // BCrypt.matches(明文密码, 哈希密码) 返回 true 表示匹配
-        // 注意参数顺序：第一个是用户输入的明文，第二个是数据库中的密文
-        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+        // 步骤 2: RSA 解密密码（兼容明文模式，解密失败时当作明文使用）
+        String rawPassword = RsaUtil.tryDecrypt(request.getPassword(), rsaKeyPair.getPrivate());
+
+        // 步骤 3: 验证密码
+        if (!passwordEncoder.matches(rawPassword, user.getPassword())) {
             throw new RuntimeException("用户名或密码错误");
         }
 
@@ -129,7 +133,7 @@ public class AuthService {
                 .user(LoginResponse.UserInfo.builder()
                         .id(user.getId())
                         .username(user.getUsername())
-                        .email(user.getEmail())
+                        .email(SensitiveFieldUtil.maskEmail(user.getEmail()))
                         .role(user.getRole().name())   // 枚举转字符串，如 "ADMIN"
                         .avatar(user.getAvatar())
                         .build())

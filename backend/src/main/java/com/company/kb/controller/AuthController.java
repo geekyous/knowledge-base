@@ -4,9 +4,13 @@ import com.company.kb.dto.ApiResponse;
 import com.company.kb.dto.LoginRequest;
 import com.company.kb.dto.LoginResponse;
 import com.company.kb.service.AuthService;
+import com.company.kb.utils.RsaUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.*;
+
+import java.security.KeyPair;
+import java.util.Map;
 
 /**
  * 认证控制器（Auth Controller）— 处理用户登录和登出请求
@@ -36,6 +40,7 @@ import org.springframework.web.bind.annotation.*;
  *   <tr><th>HTTP 方法</th><th>路径</th><th>功能</th></tr>
  *   <tr><td>POST</td><td>/api/v1/auth/login</td><td>用户登录</td></tr>
  *   <tr><td>POST</td><td>/api/v1/auth/logout</td><td>用户登出</td></tr>
+ *   <tr><td>GET</td><td>/api/v1/auth/public-key</td><td>获取 RSA 公钥</td></tr>
  * </table>
  *
  * <h2>API 版本控制</h2>
@@ -72,13 +77,18 @@ public class AuthController {
     /** 认证服务 — 处理登录业务逻辑 */
     private final AuthService authService;
 
+    /** RSA 密钥对 — 用于前后端密码加密传输 */
+    private final KeyPair rsaKeyPair;
+
     /**
-     * 构造器注入 AuthService。
+     * 构造器注入。
      *
      * @param authService 认证服务实例
+     * @param rsaKeyPair   RSA 密钥对（由 RsaKeyConfig 生成）
      */
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService, KeyPair rsaKeyPair) {
         this.authService = authService;
+        this.rsaKeyPair = rsaKeyPair;
     }
 
     /**
@@ -133,5 +143,27 @@ public class AuthController {
     @Operation(summary = "用户登出", description = "客户端丢弃 Token 即可实现登出，本接口为语义补充")
     public ApiResponse<Void> logout() {
         return ApiResponse.success("退出登录成功", null);
+    }
+
+    /**
+     * 获取 RSA 公钥 — 前端用于加密密码等敏感字段
+     *
+     * <h3>加密传输流程</h3>
+     * <pre>
+     * 1. 前端调用本接口获取 RSA 公钥
+     * 2. 前端使用公钥加密密码
+     * 3. 前端将加密后的密码发送到 /login 接口
+     * 4. 后端使用私钥解密后进行 BCrypt 比对
+     * </pre>
+     *
+     * @return Base64 编码的 RSA 公钥
+     */
+    @GetMapping("/public-key")
+    @Operation(summary = "获取 RSA 公钥", description = "前端获取公钥用于加密敏感字段（如密码）")
+    public ApiResponse<Map<String, String>> getPublicKey() {
+        return ApiResponse.success(Map.of(
+                "publicKey", RsaUtil.getPublicKeyBase64(rsaKeyPair),
+                "algorithm", "RSA"
+        ));
     }
 }
