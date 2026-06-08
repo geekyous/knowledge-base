@@ -335,38 +335,93 @@ npm run dev
 
 ### 启动后端
 
-> **⚠️ 必读**：`application.yml` 中数据库密码、JWT 密钥等使用 Jasypt `ENC()` 加密。
-> 本地运行 **必须** 设置 `JASYPT_ENCRYPTOR_PASSWORD` 环境变量，否则启动报错。
-> 主密钥值参考项目 `.env` 文件中的 `JASYPT_ENCRYPTOR_PASSWORD`。
+> **⚠️ 必读**：`application.yml` 中所有配置项均无默认值，**必须通过环境变量注入**。
+> Docker Compose 方式会在 `docker-compose.yml` 中提供合理默认值；本地开发需手动 export。
+> 若所有环境变量均为明文，则无需设置 `JASYPT_ENCRYPTOR_PASSWORD`。
 
 #### 必须设置的环境变量
 
 | 变量 | 说明 | 示例值 |
 |------|------|--------|
-| `JASYPT_ENCRYPTOR_PASSWORD` | Jasypt 主密钥，解密 `ENC()` 配置值 | 项目 `.env` 中的值 |
 | `JAVA_HOME` | JDK 17 路径（系统默认 JDK 8 会导致编译失败） | 见下方各平台说明 |
+| `DB_HOST` | MySQL 地址 | `localhost` |
+| `DB_PORT` | MySQL 端口 | `3306` |
+| `DB_DATABASE` | 数据库名 | `knowledge_base` |
+| `DB_USERNAME` | 数据库用户名 | `root` |
+| `DB_PASSWORD` | 数据库密码 | `root_password` |
+| `REDIS_HOST` | Redis 地址 | `localhost` |
+| `REDIS_PORT` | Redis 端口 | `6379` |
+| `ES_HOST` | Elasticsearch 地址 | `localhost` |
+| `ES_PORT` | Elasticsearch 端口 | `9200` |
+| `JWT_SECRET` | JWT 签名密钥（≥32字符） | `your-secret-key-...` |
+| `JWT_EXPIRATION` | JWT 过期时间（秒） | `86400` |
+| `AI_SERVICE_URL` | AI 服务地址 | `http://localhost:8000` |
+| `UPLOAD_PATH` | 文件上传路径 | `./uploads` |
+| `UPLOAD_MAX_SIZE` | 上传大小限制 | `50MB` |
+| `UPLOAD_ALLOWED_TYPES` | 允许的文件类型 | `pdf,doc,docx,...` |
+| `SERVER_PORT` | 服务端口 | `8080` |
+| `LOG_LEVEL` | 应用日志级别 | `INFO` |
+| `SECURITY_LOG_LEVEL` | 安全日志级别 | `INFO` |
+| `INIT_ADMIN_PASSWORD` | 初始管理员密码 | `admin123` |
+| `INIT_EDITOR_PASSWORD` | 初始编辑密码 | `admin123` |
+| `INIT_USER_PASSWORD` | 初始普通用户密码 | `admin123` |
 
-#### 可选环境变量（不设置则使用 `application.yml` 中的默认值）
+#### 可选环境变量
 
-| 变量 | 默认值 | 说明 |
-|------|--------|------|
-| `DB_HOST` | `localhost` | MySQL 地址 |
-| `DB_PORT` | `3306` | MySQL 端口 |
-| `DB_DATABASE` | `knowledge_base` | 数据库名 |
-| `DB_USERNAME` | `root` | 数据库用户名 |
-| `DB_PASSWORD` | `ENC(加密值)` | 数据库密码（支持明文或 `ENC(密文)`） |
-| `REDIS_HOST` | `localhost` | Redis 地址 |
-| `ES_HOST` | `localhost` | Elasticsearch 地址 |
-| `JWT_SECRET` | `ENC(加密值)` | JWT 签名密钥 |
-| `INIT_ADMIN_PASSWORD` | `admin123` | 初始管理员密码（仅首次启动时使用） |
+| 变量 | 说明 | 何时需要 |
+|------|------|----------|
+| `JASYPT_ENCRYPTOR_PASSWORD` | Jasypt 主密钥 | 仅当环境变量值中使用 `ENC()` 密文时 |
+| `REDIS_PASSWORD` | Redis 密码 | Redis 启用了认证时设置，否则留空 |
+| `ES_USERNAME` / `ES_PASSWORD` | ES 认证 | ES 启用了安全认证时设置，否则留空 |
 
 #### macOS / Linux
 
 **临时设置（当前终端有效）：**
 
 ```bash
-# Bash / Zsh 通用
-export JASYPT_ENCRYPTOR_PASSWORD=你的主密钥
+# ---- 数据库 ----
+export DB_HOST=localhost
+export DB_PORT=3306
+export DB_DATABASE=knowledge_base
+export DB_USERNAME=root
+export DB_PASSWORD=你的数据库密码
+
+# ---- Redis ----
+export REDIS_HOST=localhost
+export REDIS_PORT=6379
+export REDIS_PASSWORD=
+
+# ---- Elasticsearch ----
+export ES_HOST=localhost
+export ES_PORT=9200
+export ES_USERNAME=
+export ES_PASSWORD=
+
+# ---- JWT ----
+export JWT_SECRET=your-secret-key-must-be-at-least-32-characters-long
+export JWT_EXPIRATION=86400
+
+# ---- AI 服务 ----
+export AI_SERVICE_URL=http://localhost:8000
+
+# ---- 文件上传 ----
+export UPLOAD_PATH=./uploads
+export UPLOAD_MAX_SIZE=50MB
+export UPLOAD_ALLOWED_TYPES=pdf,doc,docx,xlsx,ppt,pptx,txt,md
+
+# ---- 服务器 ----
+export SERVER_PORT=8080
+export LOG_LEVEL=INFO
+export SECURITY_LOG_LEVEL=INFO
+
+# ---- 初始用户密码 ----
+export INIT_ADMIN_PASSWORD=admin123
+export INIT_EDITOR_PASSWORD=admin123
+export INIT_USER_PASSWORD=admin123
+
+# ---- Jasypt（仅当使用 ENC() 密文时需要）----
+# export JASYPT_ENCRYPTOR_PASSWORD=你的主密钥
+
 export JAVA_HOME=$(/usr/libexec/java_home -v 17)  # macOS
 # export JAVA_HOME=/usr/lib/jvm/java-17           # Linux
 
@@ -374,24 +429,35 @@ cd backend
 mvn spring-boot:run
 ```
 
-**单次运行（仅该命令有效）：**
-
-```bash
-JASYPT_ENCRYPTOR_PASSWORD=你的主密钥 \
-JAVA_HOME=$(/usr/libexec/java_home -v 17) \
-mvn -f backend/pom.xml spring-boot:run
-```
-
 **持久化（写入 shell 配置）：**
 
 ```bash
+# 将上述 export 命令追加到 shell 配置文件中
 # Zsh（macOS 默认）
-echo 'export JASYPT_ENCRYPTOR_PASSWORD=你的主密钥' >> ~/.zshrc
+cat >> ~/.zshrc << 'EOF'
+export DB_HOST=localhost
+export DB_PORT=3306
+export DB_DATABASE=knowledge_base
+export DB_USERNAME=root
+export DB_PASSWORD=你的数据库密码
+export REDIS_HOST=localhost
+export REDIS_PORT=6379
+export ES_HOST=localhost
+export ES_PORT=9200
+export JWT_SECRET=your-secret-key-must-be-at-least-32-characters-long
+export JWT_EXPIRATION=86400
+export AI_SERVICE_URL=http://localhost:8000
+export UPLOAD_PATH=./uploads
+export UPLOAD_MAX_SIZE=50MB
+export UPLOAD_ALLOWED_TYPES=pdf,doc,docx,xlsx,ppt,pptx,txt,md
+export SERVER_PORT=8080
+export LOG_LEVEL=INFO
+export SECURITY_LOG_LEVEL=INFO
+export INIT_ADMIN_PASSWORD=admin123
+export INIT_EDITOR_PASSWORD=admin123
+export INIT_USER_PASSWORD=admin123
+EOF
 source ~/.zshrc
-
-# Bash（Linux 常见）
-echo 'export JASYPT_ENCRYPTOR_PASSWORD=你的主密钥' >> ~/.bashrc
-source ~/.bashrc
 ```
 
 #### Windows
@@ -399,7 +465,49 @@ source ~/.bashrc
 **PowerShell（临时设置）：**
 
 ```powershell
-$env:JASYPT_ENCRYPTOR_PASSWORD = "你的主密钥"
+# ---- 数据库 ----
+$env:DB_HOST = "localhost"
+$env:DB_PORT = "3306"
+$env:DB_DATABASE = "knowledge_base"
+$env:DB_USERNAME = "root"
+$env:DB_PASSWORD = "你的数据库密码"
+
+# ---- Redis ----
+$env:REDIS_HOST = "localhost"
+$env:REDIS_PORT = "6379"
+$env:REDIS_PASSWORD = ""
+
+# ---- Elasticsearch ----
+$env:ES_HOST = "localhost"
+$env:ES_PORT = "9200"
+$env:ES_USERNAME = ""
+$env:ES_PASSWORD = ""
+
+# ---- JWT ----
+$env:JWT_SECRET = "your-secret-key-must-be-at-least-32-characters-long"
+$env:JWT_EXPIRATION = "86400"
+
+# ---- AI 服务 ----
+$env:AI_SERVICE_URL = "http://localhost:8000"
+
+# ---- 文件上传 ----
+$env:UPLOAD_PATH = "./uploads"
+$env:UPLOAD_MAX_SIZE = "50MB"
+$env:UPLOAD_ALLOWED_TYPES = "pdf,doc,docx,xlsx,ppt,pptx,txt,md"
+
+# ---- 服务器 ----
+$env:SERVER_PORT = "8080"
+$env:LOG_LEVEL = "INFO"
+$env:SECURITY_LOG_LEVEL = "INFO"
+
+# ---- 初始用户密码 ----
+$env:INIT_ADMIN_PASSWORD = "admin123"
+$env:INIT_EDITOR_PASSWORD = "admin123"
+$env:INIT_USER_PASSWORD = "admin123"
+
+# ---- Jasypt（仅当使用 ENC() 密文时需要）----
+# $env:JASYPT_ENCRYPTOR_PASSWORD = "你的主密钥"
+
 $env:JAVA_HOME = "C:\Program Files\Java\jdk-17"  # 替换为实际 JDK 17 路径
 
 cd backend
@@ -409,22 +517,32 @@ mvn spring-boot:run
 **CMD（临时设置）：**
 
 ```cmd
-set JASYPT_ENCRYPTOR_PASSWORD=你的主密钥
+set DB_HOST=localhost
+set DB_PORT=3306
+set DB_DATABASE=knowledge_base
+set DB_USERNAME=root
+set DB_PASSWORD=你的数据库密码
+set REDIS_HOST=localhost
+set REDIS_PORT=6379
+set ES_HOST=localhost
+set ES_PORT=9200
+set JWT_SECRET=your-secret-key-must-be-at-least-32-characters-long
+set JWT_EXPIRATION=86400
+set AI_SERVICE_URL=http://localhost:8000
+set UPLOAD_PATH=./uploads
+set UPLOAD_MAX_SIZE=50MB
+set UPLOAD_ALLOWED_TYPES=pdf,doc,docx,xlsx,ppt,pptx,txt,md
+set SERVER_PORT=8080
+set LOG_LEVEL=INFO
+set SECURITY_LOG_LEVEL=INFO
+set INIT_ADMIN_PASSWORD=admin123
+set INIT_EDITOR_PASSWORD=admin123
+set INIT_USER_PASSWORD=admin123
 set JAVA_HOME=C:\Program Files\Java\jdk-17
 
 cd backend
 mvn spring-boot:run
 ```
-
-**Windows 持久化（系统环境变量）：**
-
-```powershell
-# 以当前用户级别永久设置（需重启终端生效）
-[System.Environment]::SetEnvironmentVariable("JASYPT_ENCRYPTOR_PASSWORD", "你的主密钥", "User")
-[System.Environment]::SetEnvironmentVariable("JAVA_HOME", "C:\Program Files\Java\jdk-17", "User")
-```
-
-或者通过 **系统设置**：右键"此电脑" → 属性 → 高级系统设置 → 环境变量 → 新建用户变量。
 
 #### IDE 配置（IntelliJ IDEA）
 
@@ -432,9 +550,9 @@ mvn spring-boot:run
 
 1. **Run → Edit Configurations**
 2. 选择 `KnowledgeBaseApplication`
-3. **Environment variables** 填入：
+3. **Environment variables** 填入（按需修改值）：
    ```
-   JASYPT_ENCRYPTOR_PASSWORD=你的主密钥
+   DB_HOST=localhost;DB_PORT=3306;DB_DATABASE=knowledge_base;DB_USERNAME=root;DB_PASSWORD=你的数据库密码;REDIS_HOST=localhost;REDIS_PORT=6379;ES_HOST=localhost;ES_PORT=9200;JWT_SECRET=your-secret-key-must-be-at-least-32-characters-long;JWT_EXPIRATION=86400;AI_SERVICE_URL=http://localhost:8000;UPLOAD_PATH=./uploads;UPLOAD_MAX_SIZE=50MB;UPLOAD_ALLOWED_TYPES=pdf,doc,docx,xlsx,ppt,pptx,txt,md;SERVER_PORT=8080;LOG_LEVEL=INFO;SECURITY_LOG_LEVEL=INFO;INIT_ADMIN_PASSWORD=admin123;INIT_EDITOR_PASSWORD=admin123;INIT_USER_PASSWORD=admin123
    ```
 4. **Build and run using** 确认使用 JDK 17（Project Structure → SDK 选择 17）
 
