@@ -34,6 +34,9 @@ chmod +x docs/scripts/start-demo.sh
 ```bash
 # 1. 创建环境配置
 cp .env.example .env
+# ⚠️ 编辑 .env 文件，设置以下必要配置：
+#   - JASYPT_ENCRYPTOR_PASSWORD=你的主密钥（解密 ENC() 配置值，必填）
+#   - INIT_ADMIN_PASSWORD=你的管理员密码（首次启动时创建管理员账号）
 
 # 2. 启动基础服务（数据库、缓存等）
 docker compose up -d mysql redis elasticsearch qdrant
@@ -41,7 +44,7 @@ docker compose up -d mysql redis elasticsearch qdrant
 # 3. 等待服务就绪（约30秒）
 sleep 30
 
-# 4. 初始化数据
+# 4. 初始化数据（Elasticsearch 索引、Qdrant 集合等）
 cd ai-service
 pip install -r requirements.txt
 python scripts/init_elasticsearch.py
@@ -50,6 +53,8 @@ python scripts/init_redis.py
 cd ..
 
 # 5. 启动应用服务
+#    Flyway 会在后端启动时自动执行数据库迁移（建表 + 种子数据）
+#    DataInitializer 会自动创建初始用户（admin/editor/user1）
 docker compose up -d
 ```
 
@@ -66,11 +71,13 @@ docker compose up -d
 
 ## 默认账号
 
-| 用户名    | 密码       | 角色     | 说明        |
-|----------|-----------|----------|------------|
-| admin    | admin123  | 管理员    | 拥有所有权限  |
-| editor   | admin123  | 编辑      | 可管理文档    |
-| user1    | admin123  | 普通用户  | 基本使用权限  |
+> 仅在首次启动（用户表为空）时自动创建。密码可通过 `.env` 中的 `INIT_ADMIN_PASSWORD` 等变量修改。
+
+| 用户名    | 默认密码  | 角色     | 说明        |
+|----------|----------|----------|------------|
+| admin    | admin123 | 管理员    | 拥有所有权限  |
+| editor   | admin123 | 编辑      | 可管理文档    |
+| user1    | admin123 | 普通用户  | 基本使用权限  |
 
 ## 功能演示路径
 
@@ -171,10 +178,10 @@ docker compose up -d mysql
 ### Q: 如何重置所有数据？
 ```bash
 docker compose down -v    # 删除所有容器和数据卷
-docker compose up -d       # 重新启动（会自动初始化数据）
+docker compose up -d       # 重新启动，Flyway 会在后端启动时自动重建表结构和种子数据
 ```
 
 ---
 
-**文档版本：** v1.0
-**最后更新：** 2026-06-01
+**文档版本：** v1.1
+**最后更新：** 2026-06-08
