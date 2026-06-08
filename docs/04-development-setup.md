@@ -335,11 +335,19 @@ npm run dev
 
 ### 启动后端
 
+> **⚠️ 前提**：`application.yml` 中密码使用 Jasypt `ENC()` 加密，本地运行需设置主密钥。
+> 主密钥值参考项目 `.env` 文件中的 `JASYPT_ENCRYPTOR_PASSWORD`。
+
 ```bash
-cd backend
-mvn spring-boot:run
+# 方式1：设置环境变量后运行（当前终端有效）
+export JASYPT_ENCRYPTOR_PASSWORD=你的主密钥
+JAVA_HOME=$(/usr/libexec/java_home -v 17) mvn -f backend/pom.xml spring-boot:run
+
+# 方式2：单次运行（仅该命令有效）
+JASYPT_ENCRYPTOR_PASSWORD=你的主密钥 JAVA_HOME=$(/usr/libexec/java_home -v 17) mvn -f backend/pom.xml spring-boot:run
 
 # 或者使用 IDE 运行 KnowledgeBaseApplication.java
+#   IntelliJ: Run Configuration → Environment variables → 添加 JASYPT_ENCRYPTOR_PASSWORD=你的主密钥
 # 访问 http://localhost:8080
 ```
 
