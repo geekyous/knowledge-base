@@ -1,5 +1,6 @@
 package com.geekyous.kb.dto;
 
+import com.geekyous.kb.annotation.Sensitive;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -25,6 +26,7 @@ public class LoginResponse {
 
     /**
      * 用户信息嵌套 DTO — 只包含前端展示所需的用户字段。
+     * 敏感字段通过 @Sensitive 注解自动脱敏，Service 层传入原始值即可。
      *
      * @author Geekyous Guo
      */
@@ -40,8 +42,13 @@ public class LoginResponse {
         @Schema(description = "用户名", example = "admin")
         private String username;
 
-        @Schema(description = "邮箱", example = "admin@company.com")
+        @Schema(description = "邮箱（自动脱敏）", example = "a***@company.com")
+        @Sensitive(Sensitive.SensitiveType.EMAIL)
         private String email;
+
+        @Schema(description = "手机号（自动脱敏）", example = "138****0001")
+        @Sensitive(Sensitive.SensitiveType.PHONE)
+        private String phone;
 
         @Schema(description = "用户角色", example = "ADMIN", allowableValues = {"USER", "EDITOR", "ADMIN"})
         private String role;

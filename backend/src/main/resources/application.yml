@@ -4,12 +4,12 @@ spring:
   profiles:
     active: dev
 
-  # 数据源配置
+  # 数据源配置 — 所有值通过环境变量注入
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_DATABASE:knowledge_base}?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
-    username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:ENC(BM2F1Myec/dtnAO9xl1nAJ7oSh+VB45PL39a997YGX0gvJGlqxRz7Y7UdOD+LGD0)}
+    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_DATABASE}?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     hikari:
       minimum-idle: 5
       maximum-pool-size: 20
@@ -39,9 +39,9 @@ spring:
   # Redis 配置
   data:
     redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:ENC(XwIaPTiduhT7jUxImnjORZ5Yr0NboaZhokEyBzvzDqReS8KDF2NI/pu74z52+aif)}
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      password: ${REDIS_PASSWORD:}
       database: 0
       timeout: 3000ms
       lettuce:
@@ -53,7 +53,7 @@ spring:
 
   # Elasticsearch 配置
   elasticsearch:
-    uris: ${ES_HOST:http://localhost}:${ES_PORT:9200}
+    uris: ${ES_HOST}:${ES_PORT}
     username: ${ES_USERNAME:}
     password: ${ES_PASSWORD:}
 
@@ -72,25 +72,25 @@ mybatis-plus:
 
 # JWT 配置
 jwt:
-  secret: ${JWT_SECRET:ENC(Gubp/mWyNOEHoXcyvWGqnTCFuNPIF/3ljjhAVHQhxAFZf6yOQED9TOxKHrv4lPWNSJKn0oKvD2ScmZuDMnVQky4Zh1oS/yPyFLFrSkV5WRJMPQOgg4qSxZIVeBdj35GA)}
-  expiration: ${JWT_EXPIRATION:86400}
+  secret: ${JWT_SECRET}
+  expiration: ${JWT_EXPIRATION}
 
 # AI 服务配置
 ai:
   service:
-    url: ${AI_SERVICE_URL:http://localhost:8000}
+    url: ${AI_SERVICE_URL}
     timeout: 30000
 
 # 文件上传配置
 file:
   upload:
-    path: ${UPLOAD_PATH:./uploads}
-    max-size: ${UPLOAD_MAX_SIZE:50MB}
-    allowed-types: ${UPLOAD_ALLOWED_TYPES:pdf,doc,docx,xlsx,ppt,pptx,txt,md}
+    path: ${UPLOAD_PATH}
+    max-size: ${UPLOAD_MAX_SIZE}
+    allowed-types: ${UPLOAD_ALLOWED_TYPES}
 
 # 服务器配置
 server:
-  port: ${SERVER_PORT:8080}
+  port: ${SERVER_PORT}
   servlet:
     context-path: /api
   compression:
@@ -100,8 +100,8 @@ server:
 # 日志配置
 logging:
   level:
-    com.geekyous.kb: ${LOG_LEVEL:INFO}
-    org.springframework.security: ${SECURITY_LOG_LEVEL:INFO}
+    com.geekyous.kb: ${LOG_LEVEL}
+    org.springframework.security: ${SECURITY_LOG_LEVEL}
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"
     file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"
@@ -131,9 +131,13 @@ management:
       show-details: when-authorized
 
 # Jasypt 配置文件加密
-# 主密钥通过环境变量 JASYPT_ENCRYPTOR_PASSWORD 注入（勿提交到代码仓库）
-# 用法：在 .env 中设置 JASYPT_ENCRYPTOR_PASSWORD=your-master-key
-# 加密工具：java -cp "classpath" -Djasypt.encryptor.password=KEY com.geekyous.kb.utils.JasyptEncryptUtil encrypt VALUE
+# 当环境变量值中包含 ENC() 密文时，需设置 JASYPT_ENCRYPTOR_PASSWORD 主密钥
+# 若所有环境变量均为明文，则无需设置 JASYPT_ENCRYPTOR_PASSWORD
+# 加密工具用法（在 backend 目录下执行）：
+#   JAVA_HOME=$(/usr/libexec/java_home -v 17) mvn -q dependency:build-classpath -Dmdep.outputFile=/tmp/kb-cp.txt
+#   $JAVA_HOME/bin/java -cp "$(cat /tmp/kb-cp.txt):target/classes" \
+#     -Djasypt.encryptor.password=<你的主密钥> \
+#     com.geekyous.kb.utils.JasyptEncryptUtil encrypt <要加密的明文>
 jasypt:
   encryptor:
     algorithm: PBEWITHHMACSHA512ANDAES_256
@@ -142,6 +146,6 @@ jasypt:
 # 初始用户密码配置（仅首次启动、用户表为空时使用）
 app:
   init:
-    admin-password: ${INIT_ADMIN_PASSWORD:admin123}
-    editor-password: ${INIT_EDITOR_PASSWORD:admin123}
-    user-password: ${INIT_USER_PASSWORD:admin123}
+    admin-password: ${INIT_ADMIN_PASSWORD}
+    editor-password: ${INIT_EDITOR_PASSWORD}
+    user-password: ${INIT_USER_PASSWORD}

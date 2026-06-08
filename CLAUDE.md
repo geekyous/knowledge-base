@@ -25,9 +25,11 @@
 
 - 配置密码使用 Jasypt `ENC()` 加密，主密钥仅存 `.env`
 - 密码传输使用 RSA 加密，禁止明文
-- 响应中 email/phone 必须脱敏
+- **隐私字段（email/phone）必须 `@Convert` 加密存储 + `@Sensitive` 自动脱敏**
+- 响应中 email/phone 必须脱敏（DTO 用 `@Sensitive` 注解，禁止手动调用）
 - 禁止提交 `.env`，禁止硬编码密码
 - 禁止在日志中输出密码、Token、API Key
+- 禁止隐私字段明文存储到数据库
 
 ## 日志规范
 

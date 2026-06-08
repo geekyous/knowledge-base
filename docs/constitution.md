@@ -151,14 +151,25 @@ limit: int = 5
 - 前端通过 `GET /api/v1/auth/public-key` 获取公钥
 - 后端 `RsaUtil.tryDecrypt()` 兼容明文模式（仅限开发调试）
 
-### 3.3 响应脱敏
+### 3.3 隐私数据保护（双层防护）
 
+**存储加密（不可妥协）：**
+- 所有隐私数据（email、phone、身份证等）**必须加密存储，禁止明文入库**
+- 使用 JPA `AttributeConverter` + Jasypt AES-256 自动加解密，业务代码无需感知
+- 需要查询匹配的加密字段，通过 SHA-256 哈希列（如 `email_hash`）实现
+
+**响应脱敏（不可妥协）：**
 - API 响应中 email、phone、身份证等敏感字段必须脱敏
+- DTO 敏感字段使用 `@Sensitive` 注解，Jackson 序列化时自动脱敏（声明式，防止遗漏）
 - 脱敏工具：`backend/.../utils/SensitiveFieldUtil.java`
 - 脱敏规则：
   - 邮箱：`user@example.com` → `u***@example.com`
   - 手机：`13812345678` → `138****5678`
   - 身份证：`110101199001011234` → `1101****1234`
+
+**技术方案文档化（强制）：**
+- 敏感数据加密/脱敏的设计方案须写入技术文档 `docs/12-sensitive-data-guide.md`
+- 新增敏感字段时同步更新该文档，方便团队回溯
 
 ### 3.4 禁止事项
 
@@ -166,6 +177,7 @@ limit: int = 5
 - ❌ 禁止将 `.env` 文件提交到 Git
 - ❌ 禁止在日志中输出敏感信息
 - ❌ 禁止在 API 响应中返回完整密码（即使是 BCrypt 哈希）
+- ❌ 禁止隐私字段（email、phone 等）明文存储到数据库
 
 ---
 

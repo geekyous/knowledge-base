@@ -79,15 +79,27 @@ services:
       # ---- Redis ----
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
       # ---- Elasticsearch ----
       - ES_HOST=elasticsearch
       - ES_PORT=9200
+      - ES_USERNAME=${ES_USERNAME:-}
+      - ES_PASSWORD=${ES_PASSWORD:-}
       # ---- AI 服务（内部通信，无需暴露到外部）----
       - AI_SERVICE_URL=http://ai-service:8000
       # ---- JWT 密钥（⚠️ 生产环境务必通过 .env 设置强密钥）----
       - JWT_SECRET=${JWT_SECRET:-change-this-in-production}
-      # ---- Jasypt 主密钥（用于解密 ENC() 包裹的配置值）----
-      - JASYPT_ENCRYPTOR_PASSWORD=${JASYPT_ENCRYPTOR_PASSWORD}
+      - JWT_EXPIRATION=${JWT_EXPIRATION:-86400}
+      # ---- Jasypt 主密钥（仅当环境变量值中使用 ENC() 密文时需要）----
+      - JASYPT_ENCRYPTOR_PASSWORD=${JASYPT_ENCRYPTOR_PASSWORD:-}
+      # ---- 文件上传 ----
+      - UPLOAD_PATH=${UPLOAD_PATH:-/app/uploads}
+      - UPLOAD_MAX_SIZE=${UPLOAD_MAX_SIZE:-50MB}
+      - UPLOAD_ALLOWED_TYPES=${UPLOAD_ALLOWED_TYPES:-pdf,doc,docx,xlsx,ppt,pptx,txt,md}
+      # ---- 服务器配置 ----
+      - SERVER_PORT=${SERVER_PORT:-8080}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - SECURITY_LOG_LEVEL=${SECURITY_LOG_LEVEL:-INFO}
       # ---- 初始用户密码（仅首次启动时使用，建议通过 .env 设置强密码）----
       - INIT_ADMIN_PASSWORD=${INIT_ADMIN_PASSWORD:-admin123}
       - INIT_EDITOR_PASSWORD=${INIT_EDITOR_PASSWORD:-admin123}

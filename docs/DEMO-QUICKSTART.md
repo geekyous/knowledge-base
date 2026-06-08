@@ -33,24 +33,36 @@ chmod +x docs/scripts/start-demo.sh
 
 ### 环境变量说明
 
-启动前需要配置以下环境变量：
+> `application.yml` 中所有配置项均无默认值，**必须通过环境变量注入**。
+> Docker Compose 方式会在 `docker-compose.yml` 中提供合理默认值；本地开发需手动 export。
 
-| 变量 | 必填 | 默认值 | 说明 |
-|------|:----:|--------|------|
-| `JASYPT_ENCRYPTOR_PASSWORD` | ✅ | — | Jasypt 主密钥，解密 ENC() 配置值 |
-| `INIT_ADMIN_PASSWORD` | — | `admin123` | 初始管理员密码 |
-| `INIT_EDITOR_PASSWORD` | — | `admin123` | 初始编辑密码 |
-| `INIT_USER_PASSWORD` | — | `admin123` | 初始普通用户密码 |
-| `DB_HOST` | — | `localhost` | MySQL 地址 |
-| `DB_PORT` | — | `3306` | MySQL 端口 |
-| `DB_DATABASE` | — | `knowledge_base` | 数据库名 |
-| `DB_USERNAME` | — | `root` | 数据库用户名 |
-| `DB_PASSWORD` | — | `ENC(加密值)` | 数据库密码 |
-| `REDIS_HOST` | — | `localhost` | Redis 地址 |
-| `ES_HOST` | — | `localhost` | Elasticsearch 地址 |
-| `JWT_SECRET` | — | `ENC(加密值)` | JWT 签名密钥 |
-| `MOCK_MODE` | — | `false` | AI 服务模拟模式 |
-| `LLM_PROVIDER` | — | `ollama` | LLM 提供商 |
+| 变量 | 说明 | 示例值 |
+|------|------|--------|
+| `DB_HOST` | MySQL 地址 | `localhost` |
+| `DB_PORT` | MySQL 端口 | `3306` |
+| `DB_DATABASE` | 数据库名 | `knowledge_base` |
+| `DB_USERNAME` | 数据库用户名 | `root` |
+| `DB_PASSWORD` | 数据库密码 | `root_password` |
+| `REDIS_HOST` | Redis 地址 | `localhost` |
+| `REDIS_PORT` | Redis 端口 | `6379` |
+| `REDIS_PASSWORD` | Redis 密码（空=无密码） | *(留空)* |
+| `ES_HOST` | Elasticsearch 地址 | `localhost` |
+| `ES_PORT` | Elasticsearch 端口 | `9200` |
+| `ES_USERNAME` | ES 用户名（空=无认证） | *(留空)* |
+| `ES_PASSWORD` | ES 密码（空=无认证） | *(留空)* |
+| `JWT_SECRET` | JWT 签名密钥（≥32字符） | `your-secret-key-...` |
+| `JWT_EXPIRATION` | JWT 过期时间（秒） | `86400` |
+| `AI_SERVICE_URL` | AI 服务地址 | `http://localhost:8000` |
+| `UPLOAD_PATH` | 文件上传路径 | `./uploads` |
+| `UPLOAD_MAX_SIZE` | 上传大小限制 | `50MB` |
+| `UPLOAD_ALLOWED_TYPES` | 允许的文件类型 | `pdf,doc,docx,...` |
+| `SERVER_PORT` | 服务端口 | `8080` |
+| `LOG_LEVEL` | 应用日志级别 | `INFO` |
+| `SECURITY_LOG_LEVEL` | 安全日志级别 | `INFO` |
+| `INIT_ADMIN_PASSWORD` | 初始管理员密码 | `admin123` |
+| `INIT_EDITOR_PASSWORD` | 初始编辑密码 | `admin123` |
+| `INIT_USER_PASSWORD` | 初始普通用户密码 | `admin123` |
+| `JASYPT_ENCRYPTOR_PASSWORD` | Jasypt 主密钥（仅当使用 `ENC()` 密文时需要） | *(可选)* |
 
 ### 方式一：Docker Compose（推荐，使用 .env 文件）
 
@@ -129,22 +141,48 @@ docker compose up -d
 #### macOS / Linux
 
 ```bash
-# ---- 必填 ----
-export JASYPT_ENCRYPTOR_PASSWORD=<你的主密钥>
-
-# ---- 可选（不设置则使用默认值）----
+# ---- 数据库 ----
 export DB_HOST=localhost
 export DB_PORT=3306
 export DB_DATABASE=knowledge_base
 export DB_USERNAME=root
 export DB_PASSWORD=<你的数据库密码>
+
+# ---- Redis ----
 export REDIS_HOST=localhost
 export REDIS_PORT=6379
+export REDIS_PASSWORD=
+
+# ---- Elasticsearch ----
 export ES_HOST=localhost
 export ES_PORT=9200
+export ES_USERNAME=
+export ES_PASSWORD=
+
+# ---- JWT ----
+export JWT_SECRET=your-secret-key-must-be-at-least-32-characters-long
+export JWT_EXPIRATION=86400
+
+# ---- AI 服务 ----
+export AI_SERVICE_URL=http://localhost:8000
+
+# ---- 文件上传 ----
+export UPLOAD_PATH=./uploads
+export UPLOAD_MAX_SIZE=50MB
+export UPLOAD_ALLOWED_TYPES=pdf,doc,docx,xlsx,ppt,pptx,txt,md
+
+# ---- 服务器 ----
+export SERVER_PORT=8080
+export LOG_LEVEL=INFO
+export SECURITY_LOG_LEVEL=INFO
+
+# ---- 初始用户密码 ----
 export INIT_ADMIN_PASSWORD=admin123
 export INIT_EDITOR_PASSWORD=admin123
 export INIT_USER_PASSWORD=admin123
+
+# ---- Jasypt（仅当环境变量值中使用 ENC() 密文时需要）----
+# export JASYPT_ENCRYPTOR_PASSWORD=<你的主密钥>
 
 # 启动后端（Flyway 自动建表 + DataInitializer 创建初始用户）
 JAVA_HOME=$(/usr/libexec/java_home -v 17) mvn -f backend/pom.xml spring-boot:run
@@ -153,22 +191,48 @@ JAVA_HOME=$(/usr/libexec/java_home -v 17) mvn -f backend/pom.xml spring-boot:run
 #### Windows（PowerShell）
 
 ```powershell
-# ---- 必填 ----
-$env:JASYPT_ENCRYPTOR_PASSWORD = "<你的主密钥>"
-
-# ---- 可选（不设置则使用默认值）----
+# ---- 数据库 ----
 $env:DB_HOST = "localhost"
 $env:DB_PORT = "3306"
 $env:DB_DATABASE = "knowledge_base"
 $env:DB_USERNAME = "root"
 $env:DB_PASSWORD = "<你的数据库密码>"
+
+# ---- Redis ----
 $env:REDIS_HOST = "localhost"
 $env:REDIS_PORT = "6379"
+$env:REDIS_PASSWORD = ""
+
+# ---- Elasticsearch ----
 $env:ES_HOST = "localhost"
 $env:ES_PORT = "9200"
+$env:ES_USERNAME = ""
+$env:ES_PASSWORD = ""
+
+# ---- JWT ----
+$env:JWT_SECRET = "your-secret-key-must-be-at-least-32-characters-long"
+$env:JWT_EXPIRATION = "86400"
+
+# ---- AI 服务 ----
+$env:AI_SERVICE_URL = "http://localhost:8000"
+
+# ---- 文件上传 ----
+$env:UPLOAD_PATH = "./uploads"
+$env:UPLOAD_MAX_SIZE = "50MB"
+$env:UPLOAD_ALLOWED_TYPES = "pdf,doc,docx,xlsx,ppt,pptx,txt,md"
+
+# ---- 服务器 ----
+$env:SERVER_PORT = "8080"
+$env:LOG_LEVEL = "INFO"
+$env:SECURITY_LOG_LEVEL = "INFO"
+
+# ---- 初始用户密码 ----
 $env:INIT_ADMIN_PASSWORD = "admin123"
 $env:INIT_EDITOR_PASSWORD = "admin123"
 $env:INIT_USER_PASSWORD = "admin123"
+
+# ---- Jasypt（仅当环境变量值中使用 ENC() 密文时需要）----
+# $env:JASYPT_ENCRYPTOR_PASSWORD = "<你的主密钥>"
 
 # 启动后端（需先设置 JAVA_HOME 指向 JDK 17）
 cd backend

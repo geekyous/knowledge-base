@@ -6,7 +6,6 @@ import com.geekyous.kb.dto.LoginResponse;
 import com.geekyous.kb.entity.User;
 import com.geekyous.kb.repository.UserRepository;
 import com.geekyous.kb.utils.RsaUtil;
-import com.geekyous.kb.utils.SensitiveFieldUtil;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -64,13 +63,14 @@ public class AuthService {
         // 5. 生成 JWT Token
         String token = jwtConfig.generateToken(user);
 
-        // 6. 构建响应
+        // 6. 构建响应（email/phone 传原始值，@Sensitive 注解在序列化时自动脱敏）
         return LoginResponse.builder()
                 .token(token)
                 .user(LoginResponse.UserInfo.builder()
                         .id(user.getId())
                         .username(user.getUsername())
-                        .email(SensitiveFieldUtil.maskEmail(user.getEmail()))
+                        .email(user.getEmail())
+                        .phone(user.getPhone())
                         .role(user.getRole().name())
                         .avatar(user.getAvatar())
                         .build())

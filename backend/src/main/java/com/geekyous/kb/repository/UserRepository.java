@@ -20,9 +20,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByUsername(String username);
 
     /**
-     * 根据邮箱查找用户
+     * 根据邮箱哈希查找用户。
+     * email 字段已加密，无法直接查询，调用方需先计算 SHA-256 哈希再传入。
+     *
+     * @param emailHash 邮箱的 SHA-256 哈希值
+     * @see com.geekyous.kb.utils.FieldEncryptor#hash(String)
      */
-    Optional<User> findByEmail(String email);
+    Optional<User> findByEmailHash(String emailHash);
 
     /**
      * 检查用户名是否已存在
@@ -30,7 +34,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByUsername(String username);
 
     /**
-     * 检查邮箱是否已注册
+     * 检查邮箱是否已注册。
+     * email 字段已加密，调用方需先计算 SHA-256 哈希再传入。
+     *
+     * @param emailHash 邮箱的 SHA-256 哈希值
+     * @see com.geekyous.kb.utils.FieldEncryptor#hash(String)
      */
-    boolean existsByEmail(String email);
+    boolean existsByEmailHash(String emailHash);
 }
