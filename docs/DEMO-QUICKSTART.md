@@ -31,20 +31,28 @@ chmod +x docs/scripts/start-demo.sh
 
 ## 手动启动
 
+### macOS / Linux
+
 ```bash
 # 1. 创建环境配置
 cp .env.example .env
-# ⚠️ 编辑 .env 文件，设置以下必要配置：
-#   - JASYPT_ENCRYPTOR_PASSWORD=你的主密钥（解密 ENC() 配置值，必填）
-#   - INIT_ADMIN_PASSWORD=你的管理员密码（首次启动时创建管理员账号）
 
-# 2. 启动基础服务（数据库、缓存等）
+# 2. 设置必须的环境变量（将 <你的主密钥> 替换为实际值）
+sed -i '' \
+  -e 's|JASYPT_ENCRYPTOR_PASSWORD=.*|JASYPT_ENCRYPTOR_PASSWORD=<你的主密钥>|' \
+  -e 's|DB_ROOT_PASSWORD=.*|DB_ROOT_PASSWORD=root_password|' \
+  -e 's|INIT_ADMIN_PASSWORD=.*|INIT_ADMIN_PASSWORD=admin123|' \
+  -e 's|INIT_EDITOR_PASSWORD=.*|INIT_EDITOR_PASSWORD=admin123|' \
+  -e 's|INIT_USER_PASSWORD=.*|INIT_USER_PASSWORD=admin123|' \
+  .env
+
+# 3. 启动基础服务（数据库、缓存等）
 docker compose up -d mysql redis elasticsearch qdrant
 
-# 3. 等待服务就绪（约30秒）
+# 4. 等待服务就绪（约30秒）
 sleep 30
 
-# 4. 初始化数据（Elasticsearch 索引、Qdrant 集合等）
+# 5. 初始化数据（Elasticsearch 索引、Qdrant 集合等）
 cd ai-service
 pip install -r requirements.txt
 python scripts/init_elasticsearch.py
@@ -52,9 +60,42 @@ python scripts/init_qdrant.py
 python scripts/init_redis.py
 cd ..
 
-# 5. 启动应用服务
+# 6. 启动应用服务
 #    Flyway 会在后端启动时自动执行数据库迁移（建表 + 种子数据）
 #    DataInitializer 会自动创建初始用户（admin/editor/user1）
+docker compose up -d
+```
+
+### Windows（PowerShell）
+
+```powershell
+# 1. 创建环境配置
+Copy-Item .env.example .env
+
+# 2. 设置必须的环境变量（将 <你的主密钥> 替换为实际值）
+(Get-Content .env) `
+  -replace 'JASYPT_ENCRYPTOR_PASSWORD=.*', 'JASYPT_ENCRYPTOR_PASSWORD=<你的主密钥>' `
+  -replace 'DB_ROOT_PASSWORD=.*', 'DB_ROOT_PASSWORD=root_password' `
+  -replace 'INIT_ADMIN_PASSWORD=.*', 'INIT_ADMIN_PASSWORD=admin123' `
+  -replace 'INIT_EDITOR_PASSWORD=.*', 'INIT_EDITOR_PASSWORD=admin123' `
+  -replace 'INIT_USER_PASSWORD=.*', 'INIT_USER_PASSWORD=admin123' `
+  | Set-Content .env
+
+# 3. 启动基础服务（数据库、缓存等）
+docker compose up -d mysql redis elasticsearch qdrant
+
+# 4. 等待服务就绪（约30秒）
+Start-Sleep -Seconds 30
+
+# 5. 初始化数据（Elasticsearch 索引、Qdrant 集合等）
+cd ai-service
+pip install -r requirements.txt
+python scripts/init_elasticsearch.py
+python scripts/init_qdrant.py
+python scripts/init_redis.py
+cd ..
+
+# 6. 启动应用服务
 docker compose up -d
 ```
 
