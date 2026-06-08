@@ -335,21 +335,108 @@ npm run dev
 
 ### 启动后端
 
-> **⚠️ 前提**：`application.yml` 中密码使用 Jasypt `ENC()` 加密，本地运行需设置主密钥。
+> **⚠️ 必读**：`application.yml` 中数据库密码、JWT 密钥等使用 Jasypt `ENC()` 加密。
+> 本地运行 **必须** 设置 `JASYPT_ENCRYPTOR_PASSWORD` 环境变量，否则启动报错。
 > 主密钥值参考项目 `.env` 文件中的 `JASYPT_ENCRYPTOR_PASSWORD`。
 
+#### 必须设置的环境变量
+
+| 变量 | 说明 | 示例值 |
+|------|------|--------|
+| `JASYPT_ENCRYPTOR_PASSWORD` | Jasypt 主密钥，解密 `ENC()` 配置值 | 项目 `.env` 中的值 |
+| `JAVA_HOME` | JDK 17 路径（系统默认 JDK 8 会导致编译失败） | 见下方各平台说明 |
+
+#### 可选环境变量（不设置则使用 `application.yml` 中的默认值）
+
+| 变量 | 默认值 | 说明 |
+|------|--------|------|
+| `DB_HOST` | `localhost` | MySQL 地址 |
+| `DB_PORT` | `3306` | MySQL 端口 |
+| `DB_DATABASE` | `knowledge_base` | 数据库名 |
+| `DB_USERNAME` | `root` | 数据库用户名 |
+| `DB_PASSWORD` | `ENC(加密值)` | 数据库密码（支持明文或 `ENC(密文)`） |
+| `REDIS_HOST` | `localhost` | Redis 地址 |
+| `ES_HOST` | `localhost` | Elasticsearch 地址 |
+| `JWT_SECRET` | `ENC(加密值)` | JWT 签名密钥 |
+| `INIT_ADMIN_PASSWORD` | `admin123` | 初始管理员密码（仅首次启动时使用） |
+
+#### macOS / Linux
+
+**临时设置（当前终端有效）：**
+
 ```bash
-# 方式1：设置环境变量后运行（当前终端有效）
+# Bash / Zsh 通用
 export JASYPT_ENCRYPTOR_PASSWORD=你的主密钥
-JAVA_HOME=$(/usr/libexec/java_home -v 17) mvn -f backend/pom.xml spring-boot:run
+export JAVA_HOME=$(/usr/libexec/java_home -v 17)  # macOS
+# export JAVA_HOME=/usr/lib/jvm/java-17           # Linux
 
-# 方式2：单次运行（仅该命令有效）
-JASYPT_ENCRYPTOR_PASSWORD=你的主密钥 JAVA_HOME=$(/usr/libexec/java_home -v 17) mvn -f backend/pom.xml spring-boot:run
-
-# 或者使用 IDE 运行 KnowledgeBaseApplication.java
-#   IntelliJ: Run Configuration → Environment variables → 添加 JASYPT_ENCRYPTOR_PASSWORD=你的主密钥
-# 访问 http://localhost:8080
+cd backend
+mvn spring-boot:run
 ```
+
+**单次运行（仅该命令有效）：**
+
+```bash
+JASYPT_ENCRYPTOR_PASSWORD=你的主密钥 \
+JAVA_HOME=$(/usr/libexec/java_home -v 17) \
+mvn -f backend/pom.xml spring-boot:run
+```
+
+**持久化（写入 shell 配置）：**
+
+```bash
+# Zsh（macOS 默认）
+echo 'export JASYPT_ENCRYPTOR_PASSWORD=你的主密钥' >> ~/.zshrc
+source ~/.zshrc
+
+# Bash（Linux 常见）
+echo 'export JASYPT_ENCRYPTOR_PASSWORD=你的主密钥' >> ~/.bashrc
+source ~/.bashrc
+```
+
+#### Windows
+
+**PowerShell（临时设置）：**
+
+```powershell
+$env:JASYPT_ENCRYPTOR_PASSWORD = "你的主密钥"
+$env:JAVA_HOME = "C:\Program Files\Java\jdk-17"  # 替换为实际 JDK 17 路径
+
+cd backend
+mvn spring-boot:run
+```
+
+**CMD（临时设置）：**
+
+```cmd
+set JASYPT_ENCRYPTOR_PASSWORD=你的主密钥
+set JAVA_HOME=C:\Program Files\Java\jdk-17
+
+cd backend
+mvn spring-boot:run
+```
+
+**Windows 持久化（系统环境变量）：**
+
+```powershell
+# 以当前用户级别永久设置（需重启终端生效）
+[System.Environment]::SetEnvironmentVariable("JASYPT_ENCRYPTOR_PASSWORD", "你的主密钥", "User")
+[System.Environment]::SetEnvironmentVariable("JAVA_HOME", "C:\Program Files\Java\jdk-17", "User")
+```
+
+或者通过 **系统设置**：右键"此电脑" → 属性 → 高级系统设置 → 环境变量 → 新建用户变量。
+
+#### IDE 配置（IntelliJ IDEA）
+
+使用 IDE 运行 `KnowledgeBaseApplication` 时，需在 Run Configuration 中设置环境变量：
+
+1. **Run → Edit Configurations**
+2. 选择 `KnowledgeBaseApplication`
+3. **Environment variables** 填入：
+   ```
+   JASYPT_ENCRYPTOR_PASSWORD=你的主密钥
+   ```
+4. **Build and run using** 确认使用 JDK 17（Project Structure → SDK 选择 17）
 
 ### 启动 AI 服务
 
@@ -489,5 +576,5 @@ sudo ufw status
 
 ---
 
-**文档版本：** v1.0
-**最后更新：** 2026-05-31
+**文档版本：** v1.1
+**最后更新：** 2026-06-08
