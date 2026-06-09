@@ -1,7 +1,6 @@
 -- 企业知识库问答系统 - 数据库初始化脚本
 -- 版本: V1
--- 创建时间: 2026-05-31
--- 说明: 创建所有数据库表结构
+-- 说明: 创建所有数据库表结构（含敏感字段加密设计）+ 初始角色
 -- 迁移管理: Flyway（本文件只增不删，不可包含 DROP 语句）
 
 SET NAMES utf8mb4;
@@ -12,9 +11,10 @@ SET NAMES utf8mb4;
 CREATE TABLE kb_users (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '用户ID',
     username VARCHAR(50) NOT NULL UNIQUE COMMENT '用户名',
-    password VARCHAR(255) NOT NULL COMMENT '密码（加密）',
-    email VARCHAR(100) UNIQUE COMMENT '邮箱',
-    phone VARCHAR(20) COMMENT '手机号',
+    password VARCHAR(255) NOT NULL COMMENT '密码（BCrypt加密）',
+    email VARCHAR(255) NULL COMMENT '邮箱（AES加密存储）',
+    email_hash CHAR(64) NULL COMMENT '邮箱SHA-256哈希（用于查询匹配）',
+    phone VARCHAR(255) NULL COMMENT '手机号（AES加密存储）',
     avatar VARCHAR(255) COMMENT '头像URL',
     role ENUM('USER', 'EDITOR', 'ADMIN') DEFAULT 'USER' COMMENT '角色',
     status ENUM('ACTIVE', 'INACTIVE', 'LOCKED') DEFAULT 'ACTIVE' COMMENT '状态',
@@ -24,7 +24,7 @@ CREATE TABLE kb_users (
     deleted_at TIMESTAMP NULL COMMENT '删除时间（软删除）',
 
     INDEX idx_username (username),
-    INDEX idx_email (email),
+    UNIQUE INDEX uk_email_hash (email_hash),
     INDEX idx_status (status),
     INDEX idx_created_at (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户表';
@@ -232,7 +232,7 @@ CREATE TABLE kb_likes (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='点赞表';
 
 -- =====================================================
--- 插入初始角色数据
+-- 初始角色数据
 -- =====================================================
 INSERT INTO kb_roles (id, name, description, permissions) VALUES
 (1, 'USER', '普通用户', '["read:document", "search:document", "chat:ask", "profile:update"]'),

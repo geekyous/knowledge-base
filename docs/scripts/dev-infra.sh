@@ -27,9 +27,11 @@
 # 【本地开发流程】
 #   1. ./docs/scripts/dev-infra.sh                  # 启动基础设施
 #   2. ./docs/scripts/dev-infra.sh pull-models      # 拉取模型（仅首次）
-#   3. cd backend && mvn spring-boot:run       # 启动后端（或 IDE 运行）
+#   3. cd backend && mvn spring-boot:run            # 启动后端（或 IDE 运行）
 #   4. cd ai-service && uvicorn app.main:app --reload --port 8000  # 启动 AI 服务
-#   5. cd frontend && npm run dev              # 启动前端（http://localhost:5173）
+#   5. cd frontend && npm run dev                   # 启动前端（http://localhost:5173）
+#
+# 📖 完整开发环境搭建指南: docs/04-development-setup.md
 #
 # =============================================================================
 
@@ -93,6 +95,9 @@ DB_ROOT_PASSWORD=root_password
 DB_DATABASE=knowledge_base
 DB_USERNAME=kb_user
 DB_PASSWORD=kb_password
+
+# Redis 配置
+REDIS_PASSWORD=redis_password
 
 # JWT 配置
 JWT_SECRET=dev-secret-key-for-local-testing-only
