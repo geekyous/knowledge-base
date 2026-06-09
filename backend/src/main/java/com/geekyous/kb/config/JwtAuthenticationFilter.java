@@ -5,16 +5,18 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
+import com.geekyous.kb.service.TokenBlacklistService;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.List;
 
 /**
- * JWT 认证过滤器 — 从 HTTP 请求中提取并验证 JWT Token
+ * JWT 认证过滤器 — 从 HTTP 请求中提取并验证 JWT Token，检查黑名单
  * @author Geekyous Guo
  * @see JwtConfig
  * @see SecurityConfig
@@ -23,9 +25,11 @@ import java.util.ArrayList;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtConfig jwtConfig;
+    private final TokenBlacklistService tokenBlacklistService;
 
-    public JwtAuthenticationFilter(JwtConfig jwtConfig) {
+    public JwtAuthenticationFilter(JwtConfig jwtConfig, TokenBlacklistService tokenBlacklistService) {
         this.jwtConfig = jwtConfig;
+        this.tokenBlacklistService = tokenBlacklistService;
     }
 
     @Override
@@ -38,16 +42,27 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             try {
                 var claims = jwtConfig.parseToken(token);
 
-                // 2. 从 Claims 中提取用户信息
+                // 2. 检查 Token 是否已被吊销（黑名单）
+                String jti = claims.get("jti", String.class);
+                if (jti != null && tokenBlacklistService.isBlacklisted(jti)) {
+                    filterChain.doFilter(request, response);
+                    return;
+                }
+
+                // 3. 从 Claims 中提取用户信息
                 String username = claims.getSubject();
-                String role = (String) claims.get("role");
+                String role = claims.get("role", String.class);
                 Long userId = ((Number) claims.get("userId")).longValue();
 
-                // 3. 创建认证对象并存入 SecurityContext
+                // 4. 将角色映射为 Spring Security GrantedAuthority
+                List<SimpleGrantedAuthority> authorities = List.of(
+                        new SimpleGrantedAuthority("ROLE_" + role));
+
+                // 5. 创建认证对象并存入 SecurityContext
                 var authentication = new UsernamePasswordAuthenticationToken(
                     new UserDetails(userId, username, role),
                     null,
-                    new ArrayList<>()
+                    authorities
                 );
                 SecurityContextHolder.getContext().setAuthentication(authentication);
 
@@ -56,7 +71,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         }
 
-        // 4. 继续过滤器链
+        // 6. 继续过滤器链
         filterChain.doFilter(request, response);
     }
 

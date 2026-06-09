@@ -12,6 +12,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * JWT 工具类 — 负责 Token 的生成、解析和验证。
@@ -45,6 +46,7 @@ public class JwtConfig {
         Map<String, Object> claims = new HashMap<>();
         claims.put("role", user.getRole().name());
         claims.put("userId", user.getId());
+        claims.put("jti", UUID.randomUUID().toString());
 
         return Jwts.builder()
                 .claims(claims)
@@ -74,5 +76,17 @@ public class JwtConfig {
     /** 检查 Token 是否已过期。 */
     public boolean isTokenExpired(String token) {
         return parseToken(token).getExpiration().before(new Date());
+    }
+
+    /** 获取 Token 剩余有效时间（毫秒），用于设置黑名单 TTL */
+    public long getTokenRemainingMillis(String token) {
+        Date expiration = parseToken(token).getExpiration();
+        long remaining = expiration.getTime() - System.currentTimeMillis();
+        return Math.max(remaining, 0);
+    }
+
+    /** 获取 Token 的唯一标识（jti） */
+    public String getTokenId(String token) {
+        return parseToken(token).get("jti", String.class);
     }
 }
