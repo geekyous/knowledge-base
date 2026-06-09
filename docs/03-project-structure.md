@@ -12,7 +12,6 @@ knowledge-base/
 ├── docs/                        # 项目文档
 ├── docs/scripts/                # 开发脚本
 ├── docker-compose.yml           # Docker 编排配置
-├── docker-compose.dev.yml       # 开发环境配置
 ├── .env.example                 # 环境变量示例
 ├── .gitignore                   # Git 忽略配置
 └── README.md                    # 项目说明文档
@@ -307,8 +306,7 @@ docs/scripts/
 ### 根目录配置文件
 | 文件 | 用途 |
 |------|------|
-| `docker-compose.yml` | 生产环境 Docker 编排 |
-| `docker-compose.dev.yml` | 开发环境 Docker 编排 |
+| `docker-compose.yml` | Docker 编排配置（生产 + 开发共用，通过 .env 区分） |
 | `.env.example` | 环境变量模板 |
 | `.gitignore` | Git 忽略规则 |
 | `.editorconfig` | 编辑器配置 |
