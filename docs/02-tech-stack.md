@@ -253,5 +253,18 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
 
 ---
 
-**文档版本：** v1.0
-**最后更新：** 2026-05-31
+## 🔗 相关技术方案
+
+技术栈中涉及的关键技术有独立的技术方案文档，详细说明设计原理和实现方式：
+
+| 方案 | 文档 | 涉及技术栈 |
+|------|------|-----------|
+| Java / Spring 核心概念 | [java-concepts.md](technical-solutions/java-concepts.md) | Spring Boot, JPA, Security, Lombok |
+| 数据库版本迁移 | [flyway-guide.md](technical-solutions/flyway-guide.md) | Flyway, MySQL |
+| 敏感数据加密/脱敏 | [sensitive-data-guide.md](technical-solutions/sensitive-data-guide.md) | Jasypt, AES, RSA, AttributeConverter |
+| 接口安全防护 | [security-design.md](technical-solutions/security-design.md) | Redis, JWT, Spring Security, CORS |
+
+---
+
+**文档版本：** v1.1
+**最后更新：** 2026-06-10

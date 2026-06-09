@@ -267,4 +267,4 @@ Flyway 按版本号顺序执行。如果两个人都创建了 `V3__xxx.sql`：
 
 **文档版本：** v1.0
 **最后更新：** 2026-06-08
-**相关文档：** [06-database-design.md](06-database-design.md)、[10-java-concepts.md](10-java-concepts.md)、[constitution.md](constitution.md) 五、5.4
+**相关文档：** [数据库设计](../06-database-design.md)、[Java 概念](java-concepts.md)、[项目宪法](../constitution.md)

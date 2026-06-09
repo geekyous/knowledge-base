@@ -661,4 +661,4 @@ public class GlobalExceptionHandler {
 **创建日期：** 2026-06-10
 **最后更新：** 2026-06-10
 **状态：** 已完成
-**关联文档：** [F01-auth 技术设计](features/F01-auth/02-technical.md)、[CLAUDE.md 安全底线](../CLAUDE.md)
+**关联文档：** [F01-auth 技术设计](../features/F01-auth/02-technical.md)、[CLAUDE.md 安全底线](../../CLAUDE.md)

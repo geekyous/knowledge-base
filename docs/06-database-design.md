@@ -519,7 +519,7 @@ backend/src/main/resources/db/migration/
 touch backend/src/main/resources/db/migration/V3__add_user_nickname.sql
 ```
 
-> 详细使用方法见 [11-flyway-guide.md](11-flyway-guide.md)
+> 详细使用方法见 [Flyway 数据库迁移指南](technical-solutions/flyway-guide.md)
 
 ---
 
