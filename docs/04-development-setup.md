@@ -639,7 +639,10 @@ mvn spring-boot:run
 
 #### IDE 配置（IntelliJ IDEA）
 
-使用 IDE 运行 `KnowledgeBaseApplication` 时，需在 Run Configuration 中设置环境变量：
+> **⚠️ 重要**：IDEA 启动的是独立 JVM 进程，**不会读取终端 `export` 的环境变量**。
+> 必须在 Run Configuration 中单独配置。以下提供两种方式，任选其一。
+
+**方式一：手动粘贴环境变量**
 
 1. **Run → Edit Configurations**
 2. 选择 `KnowledgeBaseApplication`
@@ -648,6 +651,17 @@ mvn spring-boot:run
    DB_HOST=localhost;DB_PORT=3306;DB_DATABASE=knowledge_base;DB_USERNAME=kb_user;DB_PASSWORD=kb_password;REDIS_HOST=localhost;REDIS_PORT=6379;REDIS_PASSWORD=redis_password;ES_HOST=localhost;ES_PORT=9200;JWT_SECRET=dev-secret-key-for-local-testing-only;JWT_EXPIRATION=86400;AI_SERVICE_URL=http://localhost:8000;LLM_PROVIDER=ollama;OLLAMA_BASE_URL=http://localhost:11434;OLLAMA_CHAT_MODEL=qwen2;OLLAMA_EMBED_MODEL=nomic-embed-text;MOCK_MODE=false;QDRANT_HOST=localhost;QDRANT_PORT=6333;UPLOAD_PATH=./uploads;UPLOAD_MAX_SIZE=50MB;UPLOAD_ALLOWED_TYPES=pdf,doc,docx,xlsx,ppt,pptx,txt,md;SERVER_PORT=8080;LOG_LEVEL=INFO;SECURITY_LOG_LEVEL=WARN;INIT_ADMIN_PASSWORD=admin123;INIT_EDITOR_PASSWORD=admin123;INIT_USER_PASSWORD=admin123
    ```
 4. **Build and run using** 确认使用 JDK 17（Project Structure → SDK 选择 17）
+
+**方式二：使用 EnvFile 插件（推荐）**
+
+安装 [EnvFile 插件](https://plugins.jetbrains.com/plugin/7861-envfile) 后，可直接从项目的 `.env` 文件加载所有环境变量，无需手动维护一长串字符串：
+
+1. **Settings → Plugins** 搜索安装 `EnvFile`
+2. **Run → Edit Configurations** → 选择 `KnowledgeBaseApplication`
+3. 切换到 **EnvFile** 选项卡
+4. 勾选 **Enable EnvFile**
+5. 点击 `+` → 选择 `.env file` → 指向项目根目录的 `.env` 文件
+6. 环境变量值会自动从 `.env` 读取，修改 `.env` 后无需重新配置
 
 ### 启动 AI 服务
 
