@@ -2,6 +2,7 @@ package com.geekyous.kb.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -13,7 +14,12 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import com.geekyous.kb.interceptor.RateLimitInterceptor;
+import org.springframework.beans.factory.annotation.Value;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -26,12 +32,23 @@ import java.util.List;
  */
 @Configuration
 @EnableWebSecurity
-public class SecurityConfig {
+public class SecurityConfig implements WebMvcConfigurer {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final RateLimitInterceptor rateLimitInterceptor;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+    @Value("${app.cors.allowed-origins:http://localhost:5173}")
+    private String allowedOrigins;
+
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
+                          RateLimitInterceptor rateLimitInterceptor) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.rateLimitInterceptor = rateLimitInterceptor;
+    }
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(rateLimitInterceptor);
     }
 
     /**
@@ -57,8 +74,12 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/auth/**").permitAll()
                 // 公开接口：健康检查
                 .requestMatchers("/actuator/health").permitAll()
-                // 公开接口：文档浏览和搜索（SEO 和用户体验）
-                .requestMatchers("/api/v1/documents", "/api/v1/documents/**").permitAll()
+                // 公开接口：文档只读（列表、详情、精选、热门）
+                .requestMatchers(HttpMethod.GET, "/api/v1/documents", "/api/v1/documents/**").permitAll()
+                // 文档写操作需要认证
+                .requestMatchers(HttpMethod.POST, "/api/v1/documents", "/api/v1/documents/**").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/api/v1/documents/**").authenticated()
+                .requestMatchers(HttpMethod.DELETE, "/api/v1/documents/**").authenticated()
                 // 公开接口：搜索
                 .requestMatchers("/api/v1/search/**").permitAll()
                 // 公开接口：分类浏览
@@ -90,9 +111,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("*"));
+        config.setAllowedOrigins(Arrays.asList(allowedOrigins.split(",")));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
+        config.setAllowCredentials(true);
+        config.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
