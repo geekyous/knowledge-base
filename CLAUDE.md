@@ -11,7 +11,7 @@
 
 ## 代码规范
 
-- 注释保留"为什么"，框架概念放 `docs/10-java-concepts.md`
+- 注释保留"为什么"，框架概念放 `docs/technical-solutions/java-concepts.md`
 - Controller 不含业务逻辑，Service 不含 HTTP 语义
 - DTO 不直接暴露 Entity，Response 过滤敏感字段
 - 构造器注入，禁止 `@Autowired` 字段注入
@@ -48,7 +48,7 @@
 - `pom.xml` 变更 → `mvn compile`（JDK 17）
 - `package.json` 变更 → `npm run build`
 - 移动文件/目录 → `grep -rn "旧路径"` 确认无残留引用
-- 数据库变更 → 新建 `V{N}__描述.sql` 迁移脚本（Flyway 管理，详见 `docs/11-flyway-guide.md`）
+- 数据库变更 → 新建 `V{N}__描述.sql` 迁移脚本（Flyway 管理，详见 `docs/technical-solutions/flyway-guide.md`）
 
 ## 文档同步
 

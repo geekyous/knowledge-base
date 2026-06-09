@@ -805,9 +805,9 @@ sudo ufw status
 |------|------|
 | [快速开始指南](DEMO-QUICKSTART.md) | Docker 一键启动演示（面向评估/演示） |
 | [开发基础设施脚本](scripts/dev-infra.sh) | 本地开发基础设施启动脚本 |
-| [Flyway 数据库迁移](11-flyway-guide.md) | 数据库版本管理教程 |
-| [敏感数据保护方案](12-sensitive-data-guide.md) | 存储加密 + 响应脱敏技术方案 |
-| [Java 后端核心概念](10-java-concepts.md) | Spring Boot / JPA / Security 概念速查 |
+| [Flyway 数据库迁移](technical-solutions/flyway-guide.md) | 数据库版本管理教程 |
+| [敏感数据保护方案](technical-solutions/sensitive-data-guide.md) | 存储加密 + 响应脱敏技术方案 |
+| [Java 后端核心概念](technical-solutions/java-concepts.md) | Spring Boot / JPA / Security 概念速查 |
 
 ---
 
