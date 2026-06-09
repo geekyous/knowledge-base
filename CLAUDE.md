@@ -41,6 +41,7 @@
 
 - 分支命名：`feature/<描述>`、`fix/<描述>`、`refactor/<描述>`
 - commit 格式：`type(scope): 中文描述`
+- **分支收尾：创建 PR 前必须更新 `docs/DEVELOPMENT-PROGRESS.md`**
 
 ## 变更检查
 

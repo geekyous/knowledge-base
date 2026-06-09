@@ -2,7 +2,7 @@
 
 > 企业知识库问答系统 — 开发进度跟踪文档
 >
-> **最后更新：** 2026-06-04
+> **最后更新：** 2026-06-10
 
 ---
 
@@ -11,10 +11,9 @@
 | 指标 | 数据 |
 |------|------|
 | 技术栈 | Vue 3 + Spring Boot 3.2 + FastAPI + MySQL + Redis + Elasticsearch + Qdrant |
-| 源码文件 | 68+ 个 |
-| 代码行数 | 17,000+ 行（含教学注释） |
-| 教学注释 | 7,000+ 行（含 💡学习要点） |
-| 文档数量 | 21 篇 Markdown |
+| 源码文件 | 81+ 个 |
+| 代码行数 | 13,700+ 行（教学注释已精简） |
+| 文档数量 | 26 篇 Markdown |
 | Git 分支 | `main`（生产）+ `develop`（开发） |
 
 ---
@@ -95,6 +94,26 @@
 - [x] Vue 前端 22 个文件 — 组件注释（Vue3/TS/Pinia/Router 概念）
 - [x] Shell/Python 脚本 3 个文件 — 命令详解 + 设计模式说明
 
+### Sprint 7：接口安全防护
+- [x] @RateLimit 注解 + RateLimitInterceptor — Redis IP+URI 级别限流，超限返回 429
+- [x] LoginProtectionService — Redis 分布式计数，连续 5 次失败锁定 15 分钟
+- [x] TokenBlacklistService — Redis jti 黑名单，登出时 Token 即时失效
+- [x] SecurityHeadersFilter — CSP/HSTS/X-Frame-Options 等 7 项安全响应头
+- [x] BusinessException + GlobalExceptionHandler — 6 种异常类型，正确 HTTP 状态码
+- [x] CORS 配置化 — application.yml + 环境变量驱动，非硬编码
+- [x] 文档接口按 HTTP 方法鉴权 — GET 公开，POST/PUT/DELETE 需认证
+- [x] AuthController.logout() — 提取 Token 加入黑名单实现即时失效
+
+### Sprint 8：文档体系完善
+- [x] 技术方案文档独立目录 `docs/technical-solutions/`（4 篇）
+- [x] 安全防护技术方案 `security-design.md`（限流/防爆破/黑名单/安全头/CORS/异常）
+- [x] 敏感数据保护方案 `sensitive-data-guide.md`（加密存储 + 脱敏响应）
+- [x] Flyway 迁移指南 `flyway-guide.md`
+- [x] Java 核心概念 `java-concepts.md`
+- [x] 02-tech-stack.md 新增「相关技术方案」关联表格
+- [x] F01-auth 功能文档添加技术方案交叉引用
+- [x] constitution.md / CLAUDE.md 规则同步（安全底线、验证规则、目录约定）
+
 ---
 
 ## ⚠️ 待优化项
@@ -103,9 +122,9 @@
 | 编号 | 事项 | 说明 | 影响 |
 |------|------|------|------|
 | OPT-1 | **种子数据扩充** | 当前 6 篇文档，需扩充到 30+ 篇，覆盖所有二级分类 | 演示效果 |
-| OPT-2 | **DocumentEdit.vue 已创建** ✅| 文档编辑器页面已创建（表单+标签输入+Markdown内容+草稿保存） | 功能完整性 |
-| OPT-3 | **application.yml 调整** | `ddl-auto` 需改为 `none`（表由 SQL 创建） | 部署运行 |
-| OPT-4 | **实际构建验证** | 项目尚未 `docker compose up` 实际验证 | 可运行性 |
+| OPT-2 | ~~DocumentEdit.vue~~ | ✅ 已完成 | — |
+| OPT-3 | **CSP unsafe-inline** | 开发环境允许内联脚本，生产环境应使用 nonce/hash 策略 | 安全 |
+| OPT-4 | **JWT Secret 强度** | 生产环境应使用 256 位随机密钥，通过环境变量注入 | 安全 |
 
 ### 中优先级
 | 编号 | 事项 | 说明 |
@@ -116,6 +135,7 @@
 | OPT-8 | 文档搜索服务（SearchService） | 后端 SearchController 未接入 Elasticsearch |
 | OPT-9 | Nginx 配置文件 | `nginx/nginx.conf` 尚未创建 |
 | OPT-10 | 文件上传解析功能 | Document 上传接口仅有骨架 |
+| OPT-16 | 登录限流叠加 IP 维度 | 当前按用户名限流，可叠加 IP 防分布式攻击 |
 
 ### 低优先级
 | 编号 | 事项 | 说明 |
@@ -138,15 +158,14 @@
 
 ### Phase 2：功能完善（3-5 天）
 1. 扩充种子数据到 30+ 篇文档
-2. 创建 DocumentEdit.vue（富文本编辑器）
-3. 后端 SearchService 接入 Elasticsearch
-4. AI 对话持久化到 MySQL
+2. 后端 SearchService 接入 Elasticsearch
+3. AI 对话持久化到 MySQL
 
 ### Phase 3：生产就绪（3-5 天）
 1. 添加单元测试和集成测试
 2. 完善 Docker 生产配置
 3. 配置 CI/CD 流水线
-4. 性能优化和安全加固
+4. 安全加固收尾（CSP nonce 策略、JWT Secret 强化）
 
 ### Phase 4：功能扩展（后续）
 1. 通知系统（F07）
@@ -188,6 +207,32 @@
 
 ---
 ## 📝 变更日志
+
+### v0.4.0 — 接口安全防护体系（2026-06-10）
+
+**新增**
+- @RateLimit 注解 + RateLimitInterceptor — Redis IP+URI 级别限流，超限返回 429
+- LoginProtectionService — Redis 分布式计数，连续 5 次失败锁定 15 分钟
+- TokenBlacklistService — Redis jti 黑名单，登出时 Token 即时失效
+- SecurityHeadersFilter — CSP/HSTS/X-Frame-Options 等 7 项安全响应头
+- BusinessException — 携带 HTTP 状态码的业务异常（401/403/423）
+- GlobalExceptionHandler 覆盖 6 种异常类型（400/401/403/423/429/500）
+
+**优化**
+- CORS 配置化：从 application.yml + 环境变量读取，非硬编码 `*`
+- SecurityConfig：文档接口按 HTTP 方法区分鉴权（GET 公开 / POST/PUT/DELETE 需认证）
+- AuthService：集成登录防爆破，使用 BusinessException
+- JwtConfig：新增 jti 声明、getTokenRemainingMillis()、getTokenId()
+- AuthController.logout()：提取 Token 加入黑名单实现即时失效
+
+**文档**
+- 新增 `docs/technical-solutions/` 目录（4 篇技术方案文档）
+- 新增 `security-design.md` 接口安全防护完整技术方案
+- 同步 `F01-auth/02-technical.md` 安全实现章节
+- `02-tech-stack.md` 新增「相关技术方案」关联表格
+- `constitution.md` / `CLAUDE.md` 规则同步（安全底线、验证规则、目录约定、进度更新策略）
+
+---
 
 ### v0.3.0 — 前端可运行 + Swagger API 文档（2026-06-04）
 
@@ -273,6 +318,6 @@
 
 ---
 
-**项目版本：** v0.3.0
+**项目版本：** v0.4.0
 **仓库地址：** https://github.com/geekyous/knowledge-base
 **维护者：** Geekyous
