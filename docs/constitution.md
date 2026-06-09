@@ -312,7 +312,7 @@ type(scope): 中文描述
 | `backend/pom.xml` | `JAVA_HOME=$(/usr/libexec/java_home -v 17) mvn compile -f backend/pom.xml` |
 | `frontend/package.json` | `cd frontend && npm run build` |
 | `backend/src/main/resources/application.yml` | `mvn compile` |
-| 移动/重命名文件或目录 | `grep -rn "旧路径" --include="*.java" --include="*.yml" --include="*.md" --include="*.sh"` |
+| 移动/重命名文件或目录 | `grep -rn "旧路径" --include="*.java" --include="*.yml" --include="*.md" --include="*.sh"`；**必须解析每个相对路径验证目标文件存在**，不能只 grep 旧路径消失 |
 | `.env.example` | 与 `.env` 对比，确认字段一致 |
 
 ### 8.2 文档同步
