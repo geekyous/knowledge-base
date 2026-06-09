@@ -59,3 +59,13 @@
 - 宪法规则变更 → `CLAUDE.md` 精简版必须同步
 - 目录结构变更 → 同步宪法「项目目录约定」
 - 不确定是否影响文档时，**宁可多检查也不跳过**
+
+## 会话交接
+
+- 每个新会话启动时，读取 `memory/HANDOFF.md`（项目级 handoff 文件）
+  - status=in-progress → 向用户摘要上次进度，问是否继续；按需用 TaskCreate 重建任务
+  - status=completed 或文件 >7天 → 记作上下文，正常开始
+- 会话结束（用户说结束、任务完成）或长任务中途对话变长时：写/更新 `memory/HANDOFF.md`
+  - <60 行，聚焦下一个会话需要的信息：当前任务、已完成、剩余工作、未提交变更、关键上下文
+  - 未完成 → status: in-progress；全部完成 → status: completed
+- Plan 审批通过后、开始实现前，也写一次 handoff 快照
