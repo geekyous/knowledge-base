@@ -1,5 +1,6 @@
 package com.geekyous.kb.controller;
 
+import com.geekyous.kb.annotation.RateLimit;
 import com.geekyous.kb.dto.request.CreateDocumentRequest;
 import com.geekyous.kb.dto.request.UpdateDocumentRequest;
 import com.geekyous.kb.entity.Document;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/documents")
 @Tag(name = "文档管理", description = "文档的增删改查、精选文档、热门文档等接口")
 @Validated
+@RateLimit(key = "document", permits = 60, seconds = 60)
 public class DocumentController {
 
     private final DocumentService documentService;
