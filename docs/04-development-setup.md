@@ -33,17 +33,20 @@
 git clone <repository-url>
 cd knowledge-base
 
-# 复制环境变量文件
-cp .env.example .env
+# 启动基础设施（MySQL、Redis、ES、Qdrant、Ollama）
+./docs/scripts/dev-infra.sh
 
-# 启动所有服务
-docker-compose -f docker-compose.dev.yml up -d
+# 拉取 Ollama 模型（首次需要，约 5GB）
+./docs/scripts/dev-infra.sh pull-models
+
+# 启动所有应用服务（后端 + AI 服务 + 前端）
+docker compose up -d backend ai-service
 
 # 查看服务状态
-docker-compose ps
+docker compose ps
 
 # 查看日志
-docker-compose logs -f
+docker compose logs -f
 ```
 
 ### 访问服务
