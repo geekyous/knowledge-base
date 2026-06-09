@@ -1,5 +1,7 @@
 # 🚀 快速开始指南
 
+> 📖 **本地开发环境搭建**请参阅 [开发环境搭建指南](04-development-setup.md)，本文档侧重 Docker 一键启动演示。
+
 ## 环境要求
 
 | 工具           | 版本要求       | 说明                    |
@@ -41,24 +43,31 @@ chmod +x docs/scripts/start-demo.sh
 | `DB_HOST` | MySQL 地址 | `localhost` |
 | `DB_PORT` | MySQL 端口 | `3306` |
 | `DB_DATABASE` | 数据库名 | `knowledge_base` |
-| `DB_USERNAME` | 数据库用户名 | `root` |
-| `DB_PASSWORD` | 数据库密码 | `root_password` |
+| `DB_USERNAME` | 数据库用户名 | `kb_user` |
+| `DB_PASSWORD` | 数据库密码 | `kb_password` |
 | `REDIS_HOST` | Redis 地址 | `localhost` |
 | `REDIS_PORT` | Redis 端口 | `6379` |
-| `REDIS_PASSWORD` | Redis 密码（空=无密码） | *(留空)* |
+| `REDIS_PASSWORD` | Redis 密码 | `redis_password` |
 | `ES_HOST` | Elasticsearch 地址 | `localhost` |
 | `ES_PORT` | Elasticsearch 端口 | `9200` |
 | `ES_USERNAME` | ES 用户名（空=无认证） | *(留空)* |
 | `ES_PASSWORD` | ES 密码（空=无认证） | *(留空)* |
-| `JWT_SECRET` | JWT 签名密钥（≥32字符） | `your-secret-key-...` |
+| `JWT_SECRET` | JWT 签名密钥（≥32字符） | `dev-secret-key-for-local-testing-only` |
 | `JWT_EXPIRATION` | JWT 过期时间（秒） | `86400` |
 | `AI_SERVICE_URL` | AI 服务地址 | `http://localhost:8000` |
+| `LLM_PROVIDER` | LLM 提供商 | `ollama` |
+| `OLLAMA_BASE_URL` | Ollama 地址（LLM_PROVIDER=ollama 时需要） | `http://localhost:11434` |
+| `OLLAMA_CHAT_MODEL` | Ollama 对话模型 | `qwen2` |
+| `OLLAMA_EMBED_MODEL` | Ollama 向量模型 | `nomic-embed-text` |
+| `MOCK_MODE` | 是否模拟模式 | `false` |
+| `QDRANT_HOST` | Qdrant 地址 | `localhost` |
+| `QDRANT_PORT` | Qdrant 端口 | `6333` |
 | `UPLOAD_PATH` | 文件上传路径 | `./uploads` |
 | `UPLOAD_MAX_SIZE` | 上传大小限制 | `50MB` |
 | `UPLOAD_ALLOWED_TYPES` | 允许的文件类型 | `pdf,doc,docx,...` |
 | `SERVER_PORT` | 服务端口 | `8080` |
 | `LOG_LEVEL` | 应用日志级别 | `INFO` |
-| `SECURITY_LOG_LEVEL` | 安全日志级别 | `INFO` |
+| `SECURITY_LOG_LEVEL` | 安全日志级别 | `WARN` |
 | `INIT_ADMIN_PASSWORD` | 初始管理员密码 | `admin123` |
 | `INIT_EDITOR_PASSWORD` | 初始编辑密码 | `admin123` |
 | `INIT_USER_PASSWORD` | 初始普通用户密码 | `admin123` |
@@ -145,13 +154,13 @@ docker compose up -d
 export DB_HOST=localhost
 export DB_PORT=3306
 export DB_DATABASE=knowledge_base
-export DB_USERNAME=root
-export DB_PASSWORD=<你的数据库密码>
+export DB_USERNAME=kb_user
+export DB_PASSWORD=kb_password
 
 # ---- Redis ----
 export REDIS_HOST=localhost
 export REDIS_PORT=6379
-export REDIS_PASSWORD=
+export REDIS_PASSWORD=redis_password
 
 # ---- Elasticsearch ----
 export ES_HOST=localhost
@@ -160,11 +169,22 @@ export ES_USERNAME=
 export ES_PASSWORD=
 
 # ---- JWT ----
-export JWT_SECRET=your-secret-key-must-be-at-least-32-characters-long
+export JWT_SECRET=dev-secret-key-for-local-testing-only
 export JWT_EXPIRATION=86400
 
 # ---- AI 服务 ----
 export AI_SERVICE_URL=http://localhost:8000
+
+# ---- LLM 配置 ----
+export LLM_PROVIDER=ollama
+export OLLAMA_BASE_URL=http://localhost:11434
+export OLLAMA_CHAT_MODEL=qwen2
+export OLLAMA_EMBED_MODEL=nomic-embed-text
+export MOCK_MODE=false
+
+# ---- Qdrant ----
+export QDRANT_HOST=localhost
+export QDRANT_PORT=6333
 
 # ---- 文件上传 ----
 export UPLOAD_PATH=./uploads
@@ -174,7 +194,7 @@ export UPLOAD_ALLOWED_TYPES=pdf,doc,docx,xlsx,ppt,pptx,txt,md
 # ---- 服务器 ----
 export SERVER_PORT=8080
 export LOG_LEVEL=INFO
-export SECURITY_LOG_LEVEL=INFO
+export SECURITY_LOG_LEVEL=WARN
 
 # ---- 初始用户密码 ----
 export INIT_ADMIN_PASSWORD=admin123
@@ -182,7 +202,7 @@ export INIT_EDITOR_PASSWORD=admin123
 export INIT_USER_PASSWORD=admin123
 
 # ---- Jasypt（仅当环境变量值中使用 ENC() 密文时需要）----
-# export JASYPT_ENCRYPTOR_PASSWORD=<你的主密钥>
+# export JASYPT_ENCRYPTOR_PASSWORD=kb-demo-2026
 
 # 启动后端（Flyway 自动建表 + DataInitializer 创建初始用户）
 JAVA_HOME=$(/usr/libexec/java_home -v 17) mvn -f backend/pom.xml spring-boot:run
@@ -195,13 +215,13 @@ JAVA_HOME=$(/usr/libexec/java_home -v 17) mvn -f backend/pom.xml spring-boot:run
 $env:DB_HOST = "localhost"
 $env:DB_PORT = "3306"
 $env:DB_DATABASE = "knowledge_base"
-$env:DB_USERNAME = "root"
-$env:DB_PASSWORD = "<你的数据库密码>"
+$env:DB_USERNAME = "kb_user"
+$env:DB_PASSWORD = "kb_password"
 
 # ---- Redis ----
 $env:REDIS_HOST = "localhost"
 $env:REDIS_PORT = "6379"
-$env:REDIS_PASSWORD = ""
+$env:REDIS_PASSWORD = "redis_password"
 
 # ---- Elasticsearch ----
 $env:ES_HOST = "localhost"
@@ -210,11 +230,22 @@ $env:ES_USERNAME = ""
 $env:ES_PASSWORD = ""
 
 # ---- JWT ----
-$env:JWT_SECRET = "your-secret-key-must-be-at-least-32-characters-long"
+$env:JWT_SECRET = "dev-secret-key-for-local-testing-only"
 $env:JWT_EXPIRATION = "86400"
 
 # ---- AI 服务 ----
 $env:AI_SERVICE_URL = "http://localhost:8000"
+
+# ---- LLM 配置 ----
+$env:LLM_PROVIDER = "ollama"
+$env:OLLAMA_BASE_URL = "http://localhost:11434"
+$env:OLLAMA_CHAT_MODEL = "qwen2"
+$env:OLLAMA_EMBED_MODEL = "nomic-embed-text"
+$env:MOCK_MODE = "false"
+
+# ---- Qdrant ----
+$env:QDRANT_HOST = "localhost"
+$env:QDRANT_PORT = "6333"
 
 # ---- 文件上传 ----
 $env:UPLOAD_PATH = "./uploads"
@@ -224,7 +255,7 @@ $env:UPLOAD_ALLOWED_TYPES = "pdf,doc,docx,xlsx,ppt,pptx,txt,md"
 # ---- 服务器 ----
 $env:SERVER_PORT = "8080"
 $env:LOG_LEVEL = "INFO"
-$env:SECURITY_LOG_LEVEL = "INFO"
+$env:SECURITY_LOG_LEVEL = "WARN"
 
 # ---- 初始用户密码 ----
 $env:INIT_ADMIN_PASSWORD = "admin123"
@@ -232,7 +263,7 @@ $env:INIT_EDITOR_PASSWORD = "admin123"
 $env:INIT_USER_PASSWORD = "admin123"
 
 # ---- Jasypt（仅当环境变量值中使用 ENC() 密文时需要）----
-# $env:JASYPT_ENCRYPTOR_PASSWORD = "<你的主密钥>"
+# $env:JASYPT_ENCRYPTOR_PASSWORD = "kb-demo-2026"
 
 # 启动后端（需先设置 JAVA_HOME 指向 JDK 17）
 cd backend

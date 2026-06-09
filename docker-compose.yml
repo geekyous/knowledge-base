@@ -79,7 +79,7 @@ services:
       # ---- Redis ----
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-redis_password}
       # ---- Elasticsearch ----
       - ES_HOST=elasticsearch
       - ES_PORT=9200
@@ -152,6 +152,7 @@ services:
       # ---- Redis（用于缓存 + 会话管理）----
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-redis_password}
       # ---- Mock 模式：跳过真实 LLM 调用，用于开发测试 ----
       - MOCK_MODE=${MOCK_MODE:-false}
     depends_on:
@@ -238,12 +239,12 @@ services:
     image: redis:7-alpine
     ports:
       - "6379:6379"    # 开发调试用（如使用 RedisInsight 连接）
-    command: redis-server --appendonly yes    # 开启 AOF 持久化，重启后数据恢复
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis_password}    # AOF 持久化 + 密码认证
     volumes:
       # ---- Named Volume：持久化 AOF 文件 ----
       - redis-data:/data    # Redis 默认数据目录，AOF/RDB 文件存于此
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]    # 返回 PONG 即为健康
+      test: ["CMD", "redis-cli", "--no-auth-warning", "-a", "${REDIS_PASSWORD:-redis_password}", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
