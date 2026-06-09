@@ -139,7 +139,7 @@ start_infra() {
     echo -n "  Redis... "
     for i in $(seq 1 15); do
         if docker exec $(docker ps -qf "name=redis" 2>/dev/null) \
-            redis-cli ping 2>/dev/null | grep -q "PONG"; then
+            redis-cli --no-auth-warning -a redis_password ping 2>/dev/null | grep -q "PONG"; then
             echo -e "${GREEN}✓${NC}"
             break
         fi
@@ -162,7 +162,7 @@ start_infra() {
     # ---- Qdrant ----
     echo -n "  Qdrant... "
     for i in $(seq 1 15); do
-        if curl -s http://localhost:6333/healthz 2>/dev/null | grep -q "ok"; then
+        if curl -s http://localhost:6333/healthz 2>/dev/null | grep -q "passed"; then
             echo -e "${GREEN}✓${NC}"
             break
         fi

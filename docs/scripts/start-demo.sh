@@ -230,7 +230,7 @@ start_services() {
     # /healthz 端点: Qdrant 的健康检查接口
     echo -n "  Qdrant... "
     for i in {1..20}; do
-        if curl -s http://localhost:6333/healthz | grep -q "ok" 2>/dev/null; then
+        if curl -s http://localhost:6333/healthz | grep -q "passed" 2>/dev/null; then
             echo -e "${GREEN}✓${NC}"
             break
         fi
@@ -242,7 +242,7 @@ start_services() {
     # redis-cli ping: 返回 "PONG" 表示服务就绪
     echo -n "  Redis... "
     for i in {1..15}; do
-        if docker exec $(docker ps -qf "name=redis") redis-cli ping 2>/dev/null | grep -q "PONG"; then
+        if docker exec $(docker ps -qf "name=redis") redis-cli --no-auth-warning -a redis_password ping 2>/dev/null | grep -q "PONG"; then
             echo -e "${GREEN}✓${NC}"
             break
         fi
