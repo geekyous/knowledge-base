@@ -4,6 +4,7 @@ import com.geekyous.kb.config.JwtConfig;
 import com.geekyous.kb.dto.LoginRequest;
 import com.geekyous.kb.dto.LoginResponse;
 import com.geekyous.kb.entity.User;
+import com.geekyous.kb.exception.BusinessException;
 import com.geekyous.kb.repository.UserRepository;
 import com.geekyous.kb.utils.RsaUtil;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -26,12 +27,14 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtConfig jwtConfig;
     private final KeyPair rsaKeyPair;
+    private final LoginProtectionService loginProtectionService;
 
-    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtConfig jwtConfig, KeyPair rsaKeyPair) {
+    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtConfig jwtConfig, KeyPair rsaKeyPair, LoginProtectionService loginProtectionService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtConfig = jwtConfig;
         this.rsaKeyPair = rsaKeyPair;
+        this.loginProtectionService = loginProtectionService;
     }
 
     /**
@@ -40,27 +43,42 @@ public class AuthService {
      *
      * @param request 登录请求 DTO
      * @return LoginResponse 包含 JWT Token 和用户基本信息
-     * @throws RuntimeException 用户名不存在、密码错误或账号被禁用时
+     * @throws BusinessException 用户名不存在、密码错误(401)、账号锁定(423)或被禁用(403)
      */
     public LoginResponse login(LoginRequest request) {
+        String username = request.getUsername();
+
+        // 0. 检查账号是否被锁定（防暴力破解）
+        if (loginProtectionService.isLocked(username)) {
+            long remaining = loginProtectionService.getRemainingLockTime(username);
+            throw new BusinessException(423, "账号已锁定，请" + (remaining / 60 + 1) + "分钟后再试");
+        }
+
         // 1. 查找用户（统一错误信息防止枚举）
-        User user = userRepository.findByUsername(request.getUsername())
-                .orElseThrow(() -> new RuntimeException("用户名或密码错误"));
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> {
+                    loginProtectionService.recordFailure(username);
+                    return new BusinessException(401, "用户名或密码错误");
+                });
 
         // 2. RSA 解密密码（解密失败则当作明文）
         String rawPassword = RsaUtil.tryDecrypt(request.getPassword(), rsaKeyPair.getPrivate());
 
         // 3. 验证密码
         if (!passwordEncoder.matches(rawPassword, user.getPassword())) {
-            throw new RuntimeException("用户名或密码错误");
+            loginProtectionService.recordFailure(username);
+            throw new BusinessException(401, "用户名或密码错误");
         }
 
         // 4. 检查账号状态
         if (user.getStatus() != User.UserStatus.ACTIVE) {
-            throw new RuntimeException("账号已被禁用");
+            throw new BusinessException(403, "账号已被禁用");
         }
 
-        // 5. 生成 JWT Token
+        // 5. 登录成功，清除失败计数
+        loginProtectionService.recordSuccess(username);
+
+        // 6. 生成 JWT Token
         String token = jwtConfig.generateToken(user);
 
         // 6. 构建响应（email/phone 传原始值，@Sensitive 注解在序列化时自动脱敏）
