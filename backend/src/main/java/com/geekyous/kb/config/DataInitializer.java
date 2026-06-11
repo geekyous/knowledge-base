@@ -7,8 +7,7 @@ import com.geekyous.kb.entity.User;
 import com.geekyous.kb.repository.CategoryRepository;
 import com.geekyous.kb.repository.DocumentRepository;
 import com.geekyous.kb.repository.UserRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -26,10 +25,9 @@ import java.util.List;
  *
  * @author Geekyous
  */
+@Slf4j
 @Component
 public class DataInitializer implements ApplicationRunner {
-
-    private static final Logger logger = LoggerFactory.getLogger(DataInitializer.class);
 
     private final UserRepository userRepository;
     private final DocumentRepository documentRepository;
@@ -58,11 +56,11 @@ public class DataInitializer implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) {
         if (userRepository.count() > 0) {
-            logger.info("用户数据已存在，跳过初始化");
+            log.info("用户数据已存在，跳过初始化");
             return;
         }
 
-        logger.info("开始初始化数据...");
+        log.info("开始初始化数据...");
 
         User admin = createUser("admin", adminPassword, "admin@company.com",
                 "13800000001", User.Role.ADMIN);
@@ -73,7 +71,7 @@ public class DataInitializer implements ApplicationRunner {
 
         createSampleDocuments(admin, editor);
 
-        logger.info("数据初始化完成: 3 个用户, 示例文档");
+        log.info("数据初始化完成: 3 个用户, 示例文档");
     }
 
     private User createUser(String username, String password, String email,
@@ -86,7 +84,7 @@ public class DataInitializer implements ApplicationRunner {
                 .role(role)
                 .status(User.UserStatus.ACTIVE)
                 .build());
-        logger.info("创建用户: {} ({})", username, role);
+        log.info("创建用户: {} ({})", username, role);
         return user;
     }
 
@@ -256,7 +254,7 @@ public class DataInitializer implements ApplicationRunner {
                 findCategoryBySlug(categories, "legal"),
                 admin, DocumentStatus.DRAFT, 0, 0, false);
 
-        logger.info("创建示例文档: 4 篇");
+        log.info("创建示例文档: 4 篇");
     }
 
     private void createDocument(String title, String summary, String content,

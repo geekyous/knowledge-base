@@ -3,6 +3,7 @@ package com.geekyous.kb.service;
 import com.geekyous.kb.entity.Document;
 import com.geekyous.kb.entity.Document.DocumentStatus;
 import com.geekyous.kb.repository.DocumentRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
  * @author Geekyous Guo
  * @since 1.0.0
  */
+@Slf4j
 @Service
 public class DocumentService {
 
@@ -69,7 +71,9 @@ public class DocumentService {
      * @return 保存后的文档实体（含自动生成的 ID 和审计时间戳）
      */
     public Document createDocument(Document document) {
-        return documentRepository.save(document);
+        Document saved = documentRepository.save(document);
+        log.info("文档创建: id={}, title={}", saved.getId(), saved.getTitle());
+        return saved;
     }
 
     /**
@@ -85,7 +89,9 @@ public class DocumentService {
         if (updates.getContent() != null) doc.setContent(updates.getContent());
         if (updates.getSummary() != null) doc.setSummary(updates.getSummary());
         if (updates.getCategoryId() != null) doc.setCategoryId(updates.getCategoryId());
-        return documentRepository.save(doc);
+        Document saved = documentRepository.save(doc);
+        log.info("文档更新: id={}", id);
+        return saved;
     }
 
     /**
@@ -97,6 +103,7 @@ public class DocumentService {
         Document doc = getDocument(id);
         doc.setDeletedAt(java.time.LocalDateTime.now());
         documentRepository.save(doc);
+        log.info("文档删除(软删除): id={}", id);
     }
 
     /**

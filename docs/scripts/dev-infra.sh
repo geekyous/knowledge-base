@@ -88,19 +88,19 @@ ensure_env() {
         echo -e "${BLUE}📝 创建 .env 文件...${NC}"
         cp .env.example .env 2>/dev/null || cat > .env << 'EOF'
 # Jasypt 主密钥（用于解密 application.yml 中的 ENC() 配置值）
-JASYPT_ENCRYPTOR_PASSWORD=kb-demo-2026
+JASYPT_ENCRYPTOR_PASSWORD=kb-jasypt-master-key-2026
 
 # 数据库配置
-DB_ROOT_PASSWORD=root_password
+DB_ROOT_PASSWORD=root_password_2026
 DB_DATABASE=knowledge_base
 DB_USERNAME=kb_user
-DB_PASSWORD=kb_password
+DB_PASSWORD=kb_password_2024
 
 # Redis 配置
 REDIS_PASSWORD=redis_password
 
 # JWT 配置
-JWT_SECRET=dev-secret-key-for-local-testing-only
+JWT_SECRET=kb-jwt-secret-key-for-development-only-2026-change-in-production
 
 # AI 服务配置
 MOCK_MODE=false
@@ -126,8 +126,9 @@ start_infra() {
     # ---- MySQL ----
     echo -n "  MySQL... "
     for i in $(seq 1 30); do
-        if docker exec $(docker ps -qf "name=mysql" 2>/dev/null) \
-            mysqladmin ping -h localhost --silent 2>/dev/null; then
+        local mysql_id=$($COMPOSE_CMD ps -q mysql 2>/dev/null)
+        if [ -n "$mysql_id" ] && \
+            docker exec "$mysql_id" mysqladmin ping -h localhost --silent >/dev/null 2>&1; then
             echo -e "${GREEN}✓${NC}"
             break
         fi
@@ -138,8 +139,9 @@ start_infra() {
     # ---- Redis ----
     echo -n "  Redis... "
     for i in $(seq 1 15); do
-        if docker exec $(docker ps -qf "name=redis" 2>/dev/null) \
-            redis-cli --no-auth-warning -a redis_password ping 2>/dev/null | grep -q "PONG"; then
+        local redis_id=$($COMPOSE_CMD ps -q redis 2>/dev/null)
+        if [ -n "$redis_id" ] && \
+            docker exec "$redis_id" redis-cli --no-auth-warning -a redis_password ping 2>/dev/null | grep -q "PONG"; then
             echo -e "${GREEN}✓${NC}"
             break
         fi
@@ -187,7 +189,7 @@ start_infra() {
 # 拉取 Ollama 模型
 # =====================================================
 pull_models() {
-    local ollama_container=$(docker ps -qf "name=ollama" 2>/dev/null)
+    local ollama_container=$($COMPOSE_CMD ps -q ollama 2>/dev/null | head -1)
     if [ -z "$ollama_container" ]; then
         echo -e "${RED}❌ Ollama 容器未运行，请先执行: $0${NC}"
         exit 1
@@ -217,9 +219,9 @@ show_status() {
     echo ""
     for svc in $INFRA_SERVICES; do
         echo -n "  $svc... "
-        if docker ps --format '{{.Names}}' 2>/dev/null | grep -q "$svc"; then
-            local status=$(docker inspect --format='{{.State.Status}}' \
-                "$(docker ps -qf "name=$svc" 2>/dev/null)" 2>/dev/null)
+        local svc_id=$($COMPOSE_CMD ps -q "$svc" 2>/dev/null | head -1)
+        if [ -n "$svc_id" ]; then
+            local status=$(docker inspect --format='{{.State.Status}}' "$svc_id" 2>/dev/null)
             if [ "$status" = "running" ]; then
                 echo -e "${GREEN}✓ 运行中${NC}"
             else
@@ -257,7 +259,7 @@ show_dev_guide() {
     echo -e "  ${CYAN}📡 服务连接信息${NC}"
     echo "  ────────────────────────────────────────"
     echo "  MySQL:          localhost:3306"
-    echo "                  用户: kb_user  密码: kb_password"
+    echo "                  用户: kb_user  密码: kb_password_2024"
     echo "                  数据库: knowledge_base"
     echo ""
     echo "  Redis:          localhost:6379"
@@ -276,17 +278,8 @@ show_dev_guide() {
     echo -e "  ${CYAN}🚀 启动应用服务（新终端窗口）${NC}"
     echo "  ────────────────────────────────────────"
     echo ""
-    echo "  # 后端 (Spring Boot)"
-    echo "  cd backend && mvn spring-boot:run \\"
-    echo "    -DDB_HOST=localhost \\"
-    echo "    -DDB_PORT=3306 \\"
-    echo "    -DDB_USERNAME=kb_user \\"
-    echo "    -DDB_PASSWORD=kb_password \\"
-    echo "    -DJASYPT_ENCRYPTOR_PASSWORD=kb-demo-2026 \\"
-    echo "    -DREDIS_HOST=localhost \\"
-    echo "    -DREDIS_PASSWORD=redis_password \\"
-    echo "    -DES_HOST=http://localhost \\"
-    echo "    -DAI_SERVICE_URL=http://localhost:8000"
+    echo "  # 后端 (Spring Boot) — application.yml 默认值已适配 localhost，无需额外参数"
+    echo "  cd backend && mvn spring-boot:run"
     echo ""
     echo "  # AI 服务 (FastAPI)"
     echo "  cd ai-service && pip install -r requirements.txt"

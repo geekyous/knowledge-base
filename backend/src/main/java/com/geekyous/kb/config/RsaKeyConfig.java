@@ -1,7 +1,6 @@
 package com.geekyous.kb.config;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -14,10 +13,10 @@ import java.util.Base64;
  * RSA 密钥对配置 — 应用启动时自动生成 RSA 2048 密钥对
  * @author Geekyous
  */
+@Slf4j
 @Configuration
 public class RsaKeyConfig {
 
-    private static final Logger log = LoggerFactory.getLogger(RsaKeyConfig.class);
     private static final int KEY_SIZE = 2048;
 
     /** 生成 RSA 密钥对 Bean */

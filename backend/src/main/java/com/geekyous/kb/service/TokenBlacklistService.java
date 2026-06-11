@@ -1,7 +1,6 @@
 package com.geekyous.kb.service;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -14,10 +13,9 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Geekyous Guo
  */
+@Slf4j
 @Service
 public class TokenBlacklistService {
-
-    private static final Logger logger = LoggerFactory.getLogger(TokenBlacklistService.class);
 
     private static final String BLACKLIST_KEY_PREFIX = "token:blacklist:";
 
@@ -40,7 +38,7 @@ public class TokenBlacklistService {
         }
         String key = BLACKLIST_KEY_PREFIX + jti;
         redisTemplate.opsForValue().set(key, "1", remainingMillis, TimeUnit.MILLISECONDS);
-        logger.info("Token 已加入黑名单: jti={}, 剩余有效期={}秒", jti, remainingMillis / 1000);
+        log.info("Token 已加入黑名单: jti={}, 剩余有效期={}秒", jti, remainingMillis / 1000);
     }
 
     /**

@@ -1,7 +1,6 @@
 package com.geekyous.kb.service;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -15,10 +14,9 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Geekyous Guo
  */
+@Slf4j
 @Service
 public class LoginProtectionService {
-
-    private static final Logger logger = LoggerFactory.getLogger(LoginProtectionService.class);
 
     private static final String FAIL_KEY_PREFIX = "login_fail:";
     private static final String LOCK_KEY_PREFIX = "login_lock:";
@@ -81,7 +79,7 @@ public class LoginProtectionService {
             redisTemplate.opsForValue().set(lockKey, "1", LOCK_DURATION_SECONDS, TimeUnit.SECONDS);
             // 清除失败计数，锁定解除后重新计数
             redisTemplate.delete(failKey);
-            logger.warn("账号已锁定: username={}, 连续失败{}次, 锁定{}秒", username, count, LOCK_DURATION_SECONDS);
+            log.warn("账号已锁定: username={}, 连续失败{}次, 锁定{}秒", username, count, LOCK_DURATION_SECONDS);
         }
 
         return count != null ? count.intValue() : 1;
