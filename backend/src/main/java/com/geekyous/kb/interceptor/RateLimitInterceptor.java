@@ -5,8 +5,7 @@ import com.geekyous.kb.annotation.RateLimit;
 import com.geekyous.kb.dto.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.method.HandlerMethod;
@@ -22,10 +21,9 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Geekyous Guo
  */
+@Slf4j
 @Component
 public class RateLimitInterceptor implements HandlerInterceptor {
-
-    private static final Logger logger = LoggerFactory.getLogger(RateLimitInterceptor.class);
 
     private static final String KEY_PREFIX = "rate_limit:";
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
@@ -62,7 +60,7 @@ public class RateLimitInterceptor implements HandlerInterceptor {
         }
 
         if (count != null && count > rateLimit.permits()) {
-            logger.warn("接口限流: key={}, ip={}, uri={}, count={}", rateLimit.key(), clientIp, request.getRequestURI(), count);
+            log.warn("接口限流: key={}, ip={}, uri={}, count={}", rateLimit.key(), clientIp, request.getRequestURI(), count);
             writeTooManyRequestsResponse(response);
             return false;
         }

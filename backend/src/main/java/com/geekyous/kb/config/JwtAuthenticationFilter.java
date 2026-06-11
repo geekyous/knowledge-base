@@ -1,14 +1,15 @@
 package com.geekyous.kb.config;
 
+import com.geekyous.kb.service.TokenBlacklistService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
-import com.geekyous.kb.service.TokenBlacklistService;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -21,6 +22,7 @@ import java.util.List;
  * @see JwtConfig
  * @see SecurityConfig
  */
+@Slf4j
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
@@ -45,6 +47,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 // 2. 检查 Token 是否已被吊销（黑名单）
                 String jti = claims.get("jti", String.class);
                 if (jti != null && tokenBlacklistService.isBlacklisted(jti)) {
+                    log.warn("Token 已被吊销: jti={}", jti);
                     filterChain.doFilter(request, response);
                     return;
                 }
@@ -65,9 +68,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     authorities
                 );
                 SecurityContextHolder.getContext().setAuthentication(authentication);
+                log.debug("JWT 认证成功: username={}, role={}", username, role);
 
             } catch (Exception e) {
-                // Token 无效，不设置认证信息，请求以未认证状态继续
+                // Token 无效，记录原因但不阻止请求（未认证状态继续）
+                log.warn("JWT 验证失败: {}", e.getMessage());
             }
         }
 

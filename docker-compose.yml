@@ -24,9 +24,6 @@
 # 3. volumes: 数据持久化（容器重启数据不丢失）
 # 4. networks: 所有服务在同一个网络中，可通过服务名互相访问
 # =============================================================================
-# ⚠️ 注意: Docker Compose v3.8 不再需要 version 字段，此处保留仅为兼容提示
-version: '3.8'
-
 services:
   # ===========================================================================
   # Nginx — 统一入口，反向代理
@@ -68,8 +65,6 @@ services:
     ports:
       - "8080:8080"    # 仅开发调试用；生产环境应移除，只通过 nginx 访问
     environment:
-      # ---- Spring 配置 ----
-      - SPRING_PROFILES_ACTIVE=production    # 激活 application-production.yml
       # ---- 数据库连接（通过环境变量覆盖 application.yml 中的占位符）----
       - DB_HOST=mysql                        # Docker 服务名即主机名
       - DB_PORT=3306
@@ -212,7 +207,7 @@ services:
       - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD:-root_password}
       - MYSQL_DATABASE=${DB_DATABASE:-knowledge_base}     # 自动创建的数据库
       - MYSQL_USER=${DB_USERNAME:-kb_user}                 # 自动创建的用户（授权给上方数据库）
-      - MYSQL_PASSWORD=${DB_PASSWORD:-kb_password}
+      - MYSQL_PASSWORD=${DB_PASSWORD:-kb_password_2024}
     volumes:
       # ---- Named Volume：持久化数据库文件 ----
       - mysql-data:/var/lib/mysql

@@ -1,5 +1,7 @@
 package com.geekyous.kb.utils;
 
+import lombok.extern.slf4j.Slf4j;
+
 import javax.crypto.Cipher;
 import java.security.KeyPair;
 import java.security.PrivateKey;
@@ -26,6 +28,7 @@ import java.util.Base64;
  * @author Geekyous
  * @since 1.0.0
  */
+@Slf4j
 public class RsaUtil {
 
     private static final String RSA_ALGORITHM = "RSA";
@@ -88,6 +91,7 @@ public class RsaUtil {
             return decrypt(cipherText, privateKey);
         } catch (Exception e) {
             // 解密失败，当作明文返回（开发调试兼容）
+            log.debug("RSA 解密失败，当作明文返回: {}", e.getMessage());
             return cipherText;
         }
     }

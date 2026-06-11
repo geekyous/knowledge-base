@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Logback 配置 — 企业知识库问答系统
+
+    日志格式：时间 [线程] [traceId] 级别 类名 - 消息
+    traceId 由 TraceFilter 注入 MDC，未设置时显示空字符串
+    开发环境：控制台 DEBUG + 文件 DEBUG
+    生产环境：控制台 INFO + 文件 WARN（通过 LOG_LEVEL 环境变量覆盖）
+-->
+<configuration>
+
+    <!-- ===================================================== -->
+    <!-- 日志格式（含 traceId 追踪）                              -->
+    <!-- ===================================================== -->
+    <property name="CONSOLE_PATTERN"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{traceId:-}] %-5level %logger{36} - %msg%n"/>
+    <property name="FILE_PATTERN"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{traceId:-}] %-5level %logger{50} - %msg%n"/>
+
+    <!-- ===================================================== -->
+    <!-- 控制台 Appender                                        -->
+    <!-- ===================================================== -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${CONSOLE_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- ===================================================== -->
+    <!-- 滚动文件 Appender                                      -->
+    <!-- ===================================================== -->
+    <!-- 单文件 10MB，保留 7 天，总量 200MB，gz 压缩归档            -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/knowledge-base.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>logs/knowledge-base.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <maxFileSize>10MB</maxFileSize>
+            <maxHistory>7</maxHistory>
+            <totalSizeCap>200MB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${FILE_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- ===================================================== -->
+    <!-- 从 Spring 属性读取日志级别（application.yml logging.level）-->
+    <!-- ===================================================== -->
+    <springProperty scope="context" name="APP_LOG_LEVEL" source="logging.level.com.geekyous.kb" defaultValue="DEBUG"/>
+    <springProperty scope="context" name="SECURITY_LOG_LEVEL" source="logging.level.org.springframework.security" defaultValue="WARN"/>
+
+    <!-- ===================================================== -->
+    <!-- 项目日志级别                                            -->
+    <!-- ===================================================== -->
+    <logger name="com.geekyous.kb" level="${APP_LOG_LEVEL}"/>
+    <logger name="org.springframework.security" level="${SECURITY_LOG_LEVEL}"/>
+
+    <!-- ===================================================== -->
+    <!-- 第三方框架日志降噪                                       -->
+    <!-- ===================================================== -->
+    <logger name="org.hibernate" level="WARN"/>
+    <logger name="org.springframework.web" level="INFO"/>
+    <logger name="org.apache.catalina" level="INFO"/>
+
+    <!-- ===================================================== -->
+    <!-- Root Logger — 控制台 + 文件                             -->
+    <!-- ===================================================== -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+    </root>
+
+</configuration>

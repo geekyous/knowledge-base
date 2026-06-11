@@ -7,6 +7,7 @@ import com.geekyous.kb.entity.User;
 import com.geekyous.kb.exception.BusinessException;
 import com.geekyous.kb.repository.UserRepository;
 import com.geekyous.kb.utils.RsaUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +21,7 @@ import java.security.KeyPair;
  * @see com.geekyous.kb.controller.AuthController
  * @see JwtConfig
  */
+@Slf4j
 @Service
 public class AuthService {
 
@@ -51,6 +53,7 @@ public class AuthService {
         // 0. 检查账号是否被锁定（防暴力破解）
         if (loginProtectionService.isLocked(username)) {
             long remaining = loginProtectionService.getRemainingLockTime(username);
+            log.warn("登录失败，账号已锁定: username={}, 剩余{}秒", username, remaining);
             throw new BusinessException(423, "账号已锁定，请" + (remaining / 60 + 1) + "分钟后再试");
         }
 
@@ -58,6 +61,7 @@ public class AuthService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> {
                     loginProtectionService.recordFailure(username);
+                    log.warn("登录失败，用户不存在: username={}", username);
                     return new BusinessException(401, "用户名或密码错误");
                 });
 
@@ -67,16 +71,19 @@ public class AuthService {
         // 3. 验证密码
         if (!passwordEncoder.matches(rawPassword, user.getPassword())) {
             loginProtectionService.recordFailure(username);
+            log.warn("登录失败，密码错误: username={}", username);
             throw new BusinessException(401, "用户名或密码错误");
         }
 
         // 4. 检查账号状态
         if (user.getStatus() != User.UserStatus.ACTIVE) {
+            log.warn("登录失败，账号已禁用: username={}", username);
             throw new BusinessException(403, "账号已被禁用");
         }
 
         // 5. 登录成功，清除失败计数
         loginProtectionService.recordSuccess(username);
+        log.info("用户登录成功: username={}", username);
 
         // 6. 生成 JWT Token
         String token = jwtConfig.generateToken(user);

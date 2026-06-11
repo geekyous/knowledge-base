@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.KeyPair;
@@ -26,6 +27,7 @@ import java.util.Map;
  * @see LoginRequest
  * @see LoginResponse
  */
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/auth")
 @Tag(name = "认证管理", description = "用户登录、登出等认证相关接口")
@@ -83,6 +85,7 @@ public class AuthController {
                 tokenBlacklistService.blacklist(jti, remainingMillis);
             } catch (Exception e) {
                 // Token 已无效（过期/格式错误），无需加入黑名单，直接视为登出成功
+                log.debug("登出时 Token 已无效，跳过黑名单: {}", e.getMessage());
             }
         }
         return ApiResponse.success("登出成功", null);

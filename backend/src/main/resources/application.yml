@@ -1,15 +1,35 @@
+# =============================================================================
+# 企业知识库问答系统 — 统一配置
+# =============================================================================
+# 环境策略：${VAR:默认值}
+#   IDEA — 走默认值（localhost + DEBUG），无需加载 .env
+#   Docker — .env 覆盖（Docker 主机名 + INFO）
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# 服务器
+# ---------------------------------------------------------------------------
+server:
+  port: ${SERVER_PORT:8080}
+  servlet:
+    context-path: /api
+  compression:
+    enabled: true
+    mime-types: text/html,text/xml,text/plain,text/css,application/json,application/javascript
+
+# ---------------------------------------------------------------------------
+# 数据层
+# ---------------------------------------------------------------------------
 spring:
   application:
     name: knowledge-base
-  profiles:
-    active: dev
 
-  # 数据源配置 — 所有值通过环境变量注入
+  # MySQL
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_DATABASE}?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
+    url: jdbc:mysql://${DB_HOST:127.0.0.1}:${DB_PORT:3306}/${DB_DATABASE:knowledge_base}?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: ${DB_USERNAME:kb_user}
+    password: ${DB_PASSWORD:kb_password_2024}
     hikari:
       minimum-idle: 5
       maximum-pool-size: 20
@@ -17,7 +37,7 @@ spring:
       idle-timeout: 600000
       max-lifetime: 1800000
 
-  # JPA 配置
+  # JPA / Hibernate
   jpa:
     hibernate:
       ddl-auto: none
@@ -27,7 +47,7 @@ spring:
         dialect: org.hibernate.dialect.MySQLDialect
         format_sql: true
 
-  # Flyway 数据库迁移配置
+  # Flyway 数据库迁移
   flyway:
     enabled: true
     locations: classpath:db/migration
@@ -36,12 +56,12 @@ spring:
     encoding: UTF-8
     validate-on-migrate: true
 
-  # Redis 配置
+  # Redis
   data:
     redis:
-      host: ${REDIS_HOST}
-      port: ${REDIS_PORT}
-      password: ${REDIS_PASSWORD:}
+      host: ${REDIS_HOST:127.0.0.1}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:redis_password}
       database: 0
       timeout: 3000ms
       lettuce:
@@ -51,13 +71,13 @@ spring:
           max-idle: 8
           min-idle: 0
 
-  # Elasticsearch 配置
+  # Elasticsearch
   elasticsearch:
-    uris: ${ES_HOST}:${ES_PORT}
+    uris: ${ES_HOST:http://127.0.0.1}:${ES_PORT:9200}
     username: ${ES_USERNAME:}
     password: ${ES_PASSWORD:}
 
-# MyBatis-Plus 配置
+# MyBatis-Plus
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: true
@@ -70,87 +90,79 @@ mybatis-plus:
       logic-not-delete-value: null
   mapper-locations: classpath*:/mapper/**/*.xml
 
-# JWT 配置
-jwt:
-  secret: ${JWT_SECRET}
-  expiration: ${JWT_EXPIRATION}
+# ---------------------------------------------------------------------------
+# 安全与加密
+# ---------------------------------------------------------------------------
+# Jasypt — 加密 email/phone 等隐私字段的 AttributeConverter
+# 加密工具用法（在 backend 目录下执行）：
+#   JAVA_HOME=$(/usr/libexec/java_home -v 17) mvn -q dependency:build-classpath -Dmdep.outputFile=/tmp/kb-cp.txt
+#   $JAVA_HOME/bin/java -cp "$(cat /tmp/kb-cp.txt):target/classes" \
+#     -Djasypt.encryptor.password=<主密钥> \
+#     com.geekyous.kb.utils.JasyptEncryptUtil encrypt <明文>
+jasypt:
+  encryptor:
+    password: ${JASYPT_ENCRYPTOR_PASSWORD:kb-jasypt-master-key-2026}
+    algorithm: PBEWITHHMACSHA512ANDAES_256
+    iv-generator-classname: org.jasypt.iv.RandomIvGenerator
 
-# CORS 配置（生产环境替换为具体前端域名，多个用逗号分隔）
+# JWT 认证
+jwt:
+  secret: ${JWT_SECRET:dev-only-secret-key-do-not-use-in-production-abcdefg1234567}
+  expiration: ${JWT_EXPIRATION:86400}
+
+# ---------------------------------------------------------------------------
+# 应用配置
+# ---------------------------------------------------------------------------
 app:
+  # CORS 跨域
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000}
+  # 初始用户（仅首次启动、用户表为空时创建）
+  init:
+    admin-password: ${INIT_ADMIN_PASSWORD:admin123}
+    editor-password: ${INIT_EDITOR_PASSWORD:editor123}
+    user-password: ${INIT_USER_PASSWORD:user123}
 
-# AI 服务配置
+# AI 问答服务
 ai:
   service:
-    url: ${AI_SERVICE_URL}
+    url: ${AI_SERVICE_URL:http://127.0.0.1:8000}
     timeout: 30000
 
-# 文件上传配置
+# 文件上传
 file:
   upload:
-    path: ${UPLOAD_PATH}
-    max-size: ${UPLOAD_MAX_SIZE}
-    allowed-types: ${UPLOAD_ALLOWED_TYPES}
+    path: ${UPLOAD_PATH:./uploads}
+    max-size: ${UPLOAD_MAX_SIZE:50MB}
+    allowed-types: ${UPLOAD_ALLOWED_TYPES:pdf,doc,docx,xlsx,ppt,pptx,txt,md}
 
-# 服务器配置
-server:
-  port: ${SERVER_PORT}
-  servlet:
-    context-path: /api
-  compression:
-    enabled: true
-    mime-types: text/html,text/xml,text/plain,text/css,application/json,application/javascript
-
-# 日志配置
-logging:
-  level:
-    com.geekyous.kb: ${LOG_LEVEL}
-    org.springframework.security: ${SECURITY_LOG_LEVEL}
-  pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"
-    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"
-  file:
-    name: logs/knowledge-base.log
-
-# SpringDoc 配置
+# ---------------------------------------------------------------------------
+# 开发与运维
+# ---------------------------------------------------------------------------
+# SpringDoc / Swagger UI（开发默认开启，生产通过 .env 关闭）
 springdoc:
   api-docs:
+    enabled: ${SWAGGER_ENABLED:true}
     path: /v3/api-docs
   swagger-ui:
+    enabled: ${SWAGGER_ENABLED:true}
     path: /swagger-ui.html
     tags-sorter: alpha
     operations-sorter: alpha
   show-actuator: true
 
-# 管理端点配置
-# Actuator 端点路径会受到 server.servlet.context-path 影响
-# 实际路径为 /api/actuator/health
+# Actuator — 仅暴露 health（Docker 健康检查需要），info/metrics 按需开放
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health
   endpoint:
     health:
       show-details: when-authorized
 
-# Jasypt 配置文件加密
-# 当环境变量值中包含 ENC() 密文时，需设置 JASYPT_ENCRYPTOR_PASSWORD 主密钥
-# 若所有环境变量均为明文，则无需设置 JASYPT_ENCRYPTOR_PASSWORD
-# 加密工具用法（在 backend 目录下执行）：
-#   JAVA_HOME=$(/usr/libexec/java_home -v 17) mvn -q dependency:build-classpath -Dmdep.outputFile=/tmp/kb-cp.txt
-#   $JAVA_HOME/bin/java -cp "$(cat /tmp/kb-cp.txt):target/classes" \
-#     -Djasypt.encryptor.password=<你的主密钥> \
-#     com.geekyous.kb.utils.JasyptEncryptUtil encrypt <要加密的明文>
-jasypt:
-  encryptor:
-    algorithm: PBEWITHHMACSHA512ANDAES_256
-    iv-generator-classname: org.jasypt.iv.RandomIvGenerator
-
-# 初始用户密码配置（仅首次启动、用户表为空时使用）
-app:
-  init:
-    admin-password: ${INIT_ADMIN_PASSWORD}
-    editor-password: ${INIT_EDITOR_PASSWORD}
-    user-password: ${INIT_USER_PASSWORD}
+# 日志级别（格式、轮转、traceId 在 logback-spring.xml 中配置）
+logging:
+  level:
+    com.geekyous.kb: ${LOG_LEVEL:DEBUG}
+    org.springframework.security: ${SECURITY_LOG_LEVEL:DEBUG}
