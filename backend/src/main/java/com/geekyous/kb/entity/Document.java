@@ -92,11 +92,12 @@ public class Document {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
-    /** 文档状态：DRAFT → PENDING → PUBLISHED → ARCHIVED */
+    /** 文档状态：DRAFT → PENDING → PUBLISHED / REJECTED → ARCHIVED */
     public enum DocumentStatus {
         DRAFT,
         PENDING,
         PUBLISHED,
-        ARCHIVED
+        ARCHIVED,
+        REJECTED
     }
 }

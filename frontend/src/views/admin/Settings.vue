@@ -43,7 +43,7 @@
           <div class="setting-label">启用智能问答</div>
           <div class="setting-desc">开启后将使用AI自动回答用户问题</div>
         </div>
-        <el-switch v-model="settings.ai.enableQA" />
+        <el-switch v-model="settings.ai.enableQA" @change="(val: boolean) => handleSwitchChange('ai.enableQA', val)" />
       </div>
 
       <div class="setting-item">
@@ -51,7 +51,7 @@
           <div class="setting-label">自动文档分类</div>
           <div class="setting-desc">使用AI自动为新上传的文档分类</div>
         </div>
-        <el-switch v-model="settings.ai.autoClassify" />
+        <el-switch v-model="settings.ai.autoClassify" @change="(val: boolean) => handleSwitchChange('ai.autoClassify', val)" />
       </div>
 
       <div class="setting-item">
@@ -59,7 +59,7 @@
           <div class="setting-label">智能建议</div>
           <div class="setting-desc">在用户搜索时提供相关建议</div>
         </div>
-        <el-switch v-model="settings.ai.smartSuggestion" />
+        <el-switch v-model="settings.ai.smartSuggestion" @change="(val: boolean) => handleSwitchChange('ai.smartSuggestion', val)" />
       </div>
     </el-card>
 
@@ -79,7 +79,7 @@
           <div class="setting-label">公开搜索</div>
           <div class="setting-desc">允许未登录用户搜索公开文档</div>
         </div>
-        <el-switch v-model="settings.permission.publicSearch" />
+        <el-switch v-model="settings.permission.publicSearch" @change="(val: boolean) => handleSwitchChange('permission.publicSearch', val)" />
       </div>
 
       <div class="setting-item">
@@ -87,7 +87,7 @@
           <div class="setting-label">审核机制</div>
           <div class="setting-desc">新文档发布需要审核</div>
         </div>
-        <el-switch v-model="settings.permission.requireReview" />
+        <el-switch v-model="settings.permission.requireReview" @change="(val: boolean) => handleSwitchChange('permission.requireReview', val)" />
       </div>
     </el-card>
 
@@ -126,11 +126,12 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, computed } from 'vue'
+import { reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Monitor, Lock, Coin } from '@element-plus/icons-vue'
+import { adminSettingsApi } from '@/api/admin'
 
-/** 所有设置项集中管理，便于后续对接后端 API */
+/** 所有设置项集中管理，API 加载前使用默认值 */
 const settings = reactive({
   ai: {
     enableQA: true,
@@ -147,6 +148,40 @@ const settings = reactive({
   }
 })
 
+// ==================== API 数据加载 ====================
+
+/** 从 API 加载设置并填充到 reactive 对象 */
+async function loadSettings() {
+  try {
+    const res = await adminSettingsApi.getAll()
+    const data = res.data
+    if (data) {
+      // AI 设置
+      if (data.ai) {
+        settings.ai.enableQA = data.ai.enableQA ?? settings.ai.enableQA
+        settings.ai.autoClassify = data.ai.autoClassify ?? settings.ai.autoClassify
+        settings.ai.smartSuggestion = data.ai.smartSuggestion ?? settings.ai.smartSuggestion
+      }
+      // 权限设置
+      if (data.permission) {
+        settings.permission.publicSearch = data.permission.publicSearch ?? settings.permission.publicSearch
+        settings.permission.requireReview = data.permission.requireReview ?? settings.permission.requireReview
+      }
+      // 存储信息
+      if (data.storage) {
+        settings.storage.used = data.storage.used_gb ?? settings.storage.used
+        settings.storage.total = data.storage.total_gb ?? settings.storage.total
+      }
+    }
+  } catch {
+    // API 失败时保留默认值
+  }
+}
+
+onMounted(() => {
+  loadSettings()
+})
+
 /** 存储用量百分比 */
 const storagePercentage = computed(() => {
   return Math.round((settings.storage.used / settings.storage.total) * 100)
@@ -159,6 +194,21 @@ const progressColor = computed(() => {
   if (pct >= 70) return '#e6a23c'
   return '#409eff'
 })
+
+/** el-switch 变更时同步到后端 */
+const handleSwitchChange = async (key: string, value: boolean) => {
+  try {
+    await adminSettingsApi.update({ [key]: String(value) })
+    ElMessage.success('设置已保存')
+  } catch {
+    // API 失败时回滚开关状态
+    const keys = key.split('.')
+    if (keys.length === 2) {
+      const [group, prop] = keys
+      ;(settings as any)[group][prop] = !value
+    }
+  }
+}
 
 /** 清理缓存 */
 const handleClearCache = () => {

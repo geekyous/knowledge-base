@@ -293,3 +293,72 @@ export interface ChatResponse {
   sources: SourceDocument[]          // 引用的来源文档列表
   followUpQuestions: string[]        // 推荐的后续问题（帮助用户继续对话）
 }
+
+// ============================================================================
+// 管理后台相关类型
+// ============================================================================
+
+/** 管理后台用户（匹配后端 UserAdminResponse） */
+export interface AdminUser {
+  id: number
+  username: string
+  email: string
+  phone?: string
+  avatar?: string
+  role: 'USER' | 'EDITOR' | 'ADMIN'
+  status: 'ACTIVE' | 'INACTIVE' | 'LOCKED'
+  lastLoginAt?: string
+  createdAt: string
+}
+
+/** 创建用户请求 */
+export interface CreateUserRequest {
+  username: string
+  password: string
+  email?: string
+  phone?: string
+  role: 'USER' | 'EDITOR' | 'ADMIN'
+}
+
+/** 更新用户请求 */
+export interface UpdateUserRequest {
+  email?: string
+  phone?: string
+  role?: 'USER' | 'EDITOR' | 'ADMIN'
+  status?: 'ACTIVE' | 'INACTIVE' | 'LOCKED'
+}
+
+/** 标签（匹配后端 TagResponse） */
+export interface Tag {
+  id: number
+  name: string
+  color: string
+  docCount: number
+  createdAt: string
+}
+
+/** 分类树节点（匹配后端 CategoryTreeResponse，含 docCount） */
+export interface CategoryTreeNode {
+  id: number
+  name: string
+  slug: string
+  icon?: string
+  sortOrder: number
+  docCount: number
+  children?: CategoryTreeNode[]
+}
+
+/** 仪表盘统计 */
+export interface DashboardStats {
+  totalDocs: number
+  totalUsers: number
+  totalQuestions: number
+  accuracyRate: number
+}
+
+/** 系统设置（按 category 分组） */
+export interface SystemSettings {
+  ai: Record<string, boolean>
+  permission: Record<string, boolean>
+  storage: { used_gb: number; total_gb: number }
+}

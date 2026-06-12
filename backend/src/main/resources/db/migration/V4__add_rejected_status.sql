@@ -1,0 +1,4 @@
+-- V4: 文档状态枚举增加 REJECTED（审核拒绝）
+ALTER TABLE kb_documents
+    MODIFY COLUMN status ENUM('DRAFT', 'PENDING', 'PUBLISHED', 'ARCHIVED', 'REJECTED')
+    DEFAULT 'DRAFT' COMMENT '文档状态';

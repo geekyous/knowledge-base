@@ -43,7 +43,7 @@
     </el-tabs>
 
     <!-- 审核卡片列表 -->
-    <div class="review-list">
+    <div v-loading="loading" class="review-list">
       <el-card
         v-for="doc in currentList"
         :key="doc.id"
@@ -116,7 +116,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import {
   Select,
   View,
@@ -130,6 +130,8 @@ import {
   ArrowRight
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { adminReviewApi } from '@/api/admin'
+import type { Document as DocType } from '@/types'
 
 // ==================== 类型定义 ====================
 interface ReviewDoc {
@@ -140,13 +142,12 @@ interface ReviewDoc {
   date: string
   iconBg: string
   icon: typeof Document
+  /** 保留原始 Document 引用，用于 API 操作 */
+  _raw?: DocType
 }
 
-// ==================== 状态 ====================
-const activeTab = ref('pending')
-
-// ==================== Mock 数据 ====================
-const pendingList = ref<ReviewDoc[]>([
+// ==================== Mock 数据（API 不可用时的降级数据）====================
+const mockPendingList: ReviewDoc[] = [
   {
     id: 1,
     title: '员工手册 2025版',
@@ -174,10 +175,54 @@ const pendingList = ref<ReviewDoc[]>([
     iconBg: 'linear-gradient(135deg, #67c23a, #529b2e)',
     icon: Document
   }
-])
+]
 
+// ==================== 状态 ====================
+const activeTab = ref('pending')
+const loading = ref(false)
+
+const pendingList = ref<ReviewDoc[]>([])
 const approvedList = ref<ReviewDoc[]>([])
 const rejectedList = ref<ReviewDoc[]>([])
+
+/** 将 API Document 转换为页面展示用的 ReviewDoc */
+const toReviewDoc = (doc: DocType): ReviewDoc => ({
+  id: doc.id,
+  title: doc.title,
+  category: doc.category?.name ?? '未分类',
+  author: doc.author?.username ?? '未知',
+  date: doc.createdAt?.slice(0, 10) ?? '',
+  iconBg: 'linear-gradient(135deg, #409eff, #337ecc)',
+  icon: Document,
+  _raw: doc
+})
+
+/** 加载当前 Tab 数据 */
+const loadCurrentTab = async () => {
+  loading.value = true
+  try {
+    if (activeTab.value === 'pending') {
+      const res = await adminReviewApi.listPending({ page: 1, size: 20 })
+      pendingList.value = (res.data?.items ?? []).map(toReviewDoc)
+    } else {
+      const status = activeTab.value === 'approved' ? 'PUBLISHED' : 'REJECTED'
+      const res = await adminReviewApi.listReviewed({ status, page: 1, size: 20 })
+      const docs = (res.data?.items ?? []).map(toReviewDoc)
+      if (activeTab.value === 'approved') {
+        approvedList.value = docs
+      } else {
+        rejectedList.value = docs
+      }
+    }
+  } catch {
+    // API 不可用时降级到 mock 数据
+    if (activeTab.value === 'pending' && pendingList.value.length === 0) {
+      pendingList.value = mockPendingList
+    }
+  } finally {
+    loading.value = false
+  }
+}
 
 /** 待审核数量 */
 const pendingCount = computed(() => pendingList.value.length)
@@ -217,11 +262,14 @@ const handleApprove = async (doc: ReviewDoc) => {
       '审核确认',
       { confirmButtonText: '通过', cancelButtonText: '取消', type: 'success' }
     )
-    pendingList.value = pendingList.value.filter(d => d.id !== doc.id)
-    approvedList.value.push(doc)
+    await adminReviewApi.approve(doc.id)
     ElMessage.success(`已通过：${doc.title}`)
-  } catch {
-    // 用户取消操作
+    await loadCurrentTab()
+  } catch (e: unknown) {
+    // ElMessageBox 取消时不报错；API 异常时提示
+    if (e !== 'cancel' && e !== 'close') {
+      ElMessage.error('审核操作失败，请稍后重试')
+    }
   }
 }
 
@@ -233,11 +281,13 @@ const handleReject = async (doc: ReviewDoc) => {
       '审核确认',
       { confirmButtonText: '拒绝', cancelButtonText: '取消', type: 'warning' }
     )
-    pendingList.value = pendingList.value.filter(d => d.id !== doc.id)
-    rejectedList.value.push(doc)
+    await adminReviewApi.reject(doc.id)
     ElMessage.warning(`已拒绝：${doc.title}`)
-  } catch {
-    // 用户取消操作
+    await loadCurrentTab()
+  } catch (e: unknown) {
+    if (e !== 'cancel' && e !== 'close') {
+      ElMessage.error('审核操作失败，请稍后重试')
+    }
   }
 }
 
@@ -249,12 +299,14 @@ const handleBatchApprove = async () => {
       '批量审核',
       { confirmButtonText: '全部通过', cancelButtonText: '取消', type: 'success' }
     )
-    const docs = [...pendingList.value]
-    approvedList.value.push(...docs)
-    pendingList.value = []
-    ElMessage.success(`已批量通过 ${docs.length} 篇文档`)
-  } catch {
-    // 用户取消操作
+    const ids = pendingList.value.map(d => d.id)
+    await adminReviewApi.batchApprove(ids)
+    ElMessage.success(`已批量通过 ${ids.length} 篇文档`)
+    await loadCurrentTab()
+  } catch (e: unknown) {
+    if (e !== 'cancel' && e !== 'close') {
+      ElMessage.error('批量审核操作失败，请稍后重试')
+    }
   }
 }
 
@@ -262,6 +314,18 @@ const handleBatchApprove = async () => {
 const handleViewAll = () => {
   ElMessage.info('查看全部待审核文档')
 }
+
+// ==================== 生命周期 ====================
+
+/** Tab 切换时重新加载 */
+watch(activeTab, () => {
+  loadCurrentTab()
+})
+
+/** 页面初始化加载待审核列表 */
+onMounted(() => {
+  loadCurrentTab()
+})
 </script>
 
 <style scoped lang="scss">

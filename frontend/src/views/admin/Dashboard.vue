@@ -251,10 +251,10 @@ import {
   DataLine
 } from '@element-plus/icons-vue'
 
-// 导入文档 API
-import { documentApi } from '@/api/document'
+// 导入管理后台 API
+import { adminDashboardApi } from '@/api/admin'
 
-// ==================== 统计数据（Mock） ====================
+// ==================== 统计数据（Mock fallback） ====================
 /** 系统统计数据 */
 const stats = ref({
   totalDocuments: 1256,
@@ -263,7 +263,7 @@ const stats = ref({
   accuracyRate: 94.7
 })
 
-// ==================== 最近文档（Mock） ====================
+// ==================== 最近文档（Mock fallback） ====================
 /** 最近文档表格数据 */
 const recentDocuments = ref([
   { id: 1, title: '员工手册 (2025版)', author: 'HR部门', status: 'PUBLISHED', viewCount: 1234, createdAt: '06-01' },
@@ -273,7 +273,7 @@ const recentDocuments = ref([
   { id: 5, title: '新员工入职指南', author: 'HR部门', status: 'PUBLISHED', viewCount: 2380, createdAt: '05-20' }
 ])
 
-// ==================== 待审核文档（Mock） ====================
+// ==================== 待审核文档（Mock fallback） ====================
 /** 待审核文档列表 */
 const pendingDocs = ref([
   { id: 101, title: 'API 接口设计规范', author: '架构组', createdAt: '05-31' },
@@ -304,24 +304,58 @@ const statusLabel = (status: string) => {
 }
 
 /**
- * 组件挂载时获取最新数据
+ * 组件挂载时从管理后台 API 获取最新数据
  *
- * 尝试从 API 获取真实数据来替换 Mock 数据。
- * API 失败则保持 Mock 数据不变。
+ * 并行请求统计数据、最近文档、待审核文档。
+ * 各请求独立 try/catch，单个 API 失败不影响其他数据，保留 Mock 数据作为 fallback。
  */
 onMounted(async () => {
+  // 统计数据
   try {
-    const res = await documentApi.getList({ page: 1, pageSize: 5 })
-    recentDocuments.value = res.data.items.map((d: any) => ({
-      id: d.id,
-      title: d.title,
-      author: d.author?.username || '未知',
-      status: d.status,
-      viewCount: d.viewCount,
-      createdAt: new Date(d.createdAt).toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' })
-    }))
+    const statsRes = await adminDashboardApi.getStats()
+    const d = statsRes.data
+    if (d) {
+      stats.value = {
+        totalDocuments: d.totalDocs,
+        totalUsers: d.totalUsers,
+        totalQuestions: d.totalQuestions,
+        accuracyRate: d.accuracyRate
+      }
+    }
   } catch {
-    // keep mock data: API 失败时保留初始 Mock 数据
+    // 保留 mock 数据
+  }
+
+  // 最近文档
+  try {
+    const docsRes = await adminDashboardApi.getRecentDocs(5)
+    if (docsRes.data?.length) {
+      recentDocuments.value = docsRes.data.map((d: any) => ({
+        id: d.id,
+        title: d.title,
+        author: d.author?.username || '未知',
+        status: d.status,
+        viewCount: d.viewCount,
+        createdAt: new Date(d.createdAt).toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' })
+      }))
+    }
+  } catch {
+    // 保留 mock 数据
+  }
+
+  // 待审核文档
+  try {
+    const pendingRes = await adminDashboardApi.getPendingReviews({ page: 1, size: 3 })
+    if (pendingRes.data?.items?.length) {
+      pendingDocs.value = pendingRes.data.items.map((d: any) => ({
+        id: d.id,
+        title: d.title,
+        author: d.author?.username || '未知',
+        createdAt: new Date(d.createdAt).toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' })
+      }))
+    }
+  } catch {
+    // 保留 mock 数据
   }
 })
 </script>

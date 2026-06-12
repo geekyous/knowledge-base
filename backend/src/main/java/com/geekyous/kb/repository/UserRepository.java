@@ -1,6 +1,10 @@
 package com.geekyous.kb.repository;
 
 import com.geekyous.kb.entity.User;
+import com.geekyous.kb.entity.User.Role;
+import com.geekyous.kb.entity.User.UserStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -14,31 +18,20 @@ import java.util.Optional;
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
 
-    /**
-     * 根据用户名查找用户（登录认证）
-     */
     Optional<User> findByUsername(String username);
 
-    /**
-     * 根据邮箱哈希查找用户。
-     * email 字段已加密，无法直接查询，调用方需先计算 SHA-256 哈希再传入。
-     *
-     * @param emailHash 邮箱的 SHA-256 哈希值
-     * @see com.geekyous.kb.utils.FieldEncryptor#hash(String)
-     */
     Optional<User> findByEmailHash(String emailHash);
 
-    /**
-     * 检查用户名是否已存在
-     */
     boolean existsByUsername(String username);
 
-    /**
-     * 检查邮箱是否已注册。
-     * email 字段已加密，调用方需先计算 SHA-256 哈希再传入。
-     *
-     * @param emailHash 邮箱的 SHA-256 哈希值
-     * @see com.geekyous.kb.utils.FieldEncryptor#hash(String)
-     */
     boolean existsByEmailHash(String emailHash);
+
+    /** 按角色分页查询（管理员后台） */
+    Page<User> findByRole(Role role, Pageable pageable);
+
+    /** 按状态分页查询（管理员后台） */
+    Page<User> findByStatus(UserStatus status, Pageable pageable);
+
+    /** 按用户名或邮箱模糊搜索（管理员后台） */
+    Page<User> findByUsernameContainingOrEmailContaining(String username, String email, Pageable pageable);
 }

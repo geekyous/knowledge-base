@@ -195,7 +195,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import {
@@ -212,10 +212,12 @@ import {
   Setting,
   InfoFilled
 } from '@element-plus/icons-vue'
+import { adminCategoryApi } from '@/api/admin'
+import type { CategoryTreeNode } from '@/types'
 
 // ==================== 类型定义 ====================
 
-/** 分类树节点数据结构 */
+/** el-tree 节点数据结构（API 返回的 name 映射为 label） */
 interface CategoryNode {
   id: number
   label: string
@@ -234,9 +236,9 @@ interface CategoryForm {
   sort: number
 }
 
-// ==================== Mock 分类树数据 ====================
+// ==================== Mock 分类树数据（API 失败时的 fallback） ====================
 
-const categoryTree = ref<CategoryNode[]>([
+const mockTree: CategoryNode[] = [
   {
     id: 1,
     label: '人事制度',
@@ -275,7 +277,9 @@ const categoryTree = ref<CategoryNode[]>([
     icon: 'briefcase',
     sort: 4
   }
-])
+]
+
+const categoryTree = ref<CategoryNode[]>([])
 
 // ==================== 树配置 ====================
 
@@ -317,6 +321,35 @@ const formRules: FormRules = {
     { max: 20, message: '分类名称不能超过20个字符', trigger: 'blur' }
   ]
 }
+
+// ==================== API 数据加载 ====================
+
+/** 将 API 返回的 CategoryTreeNode 递归映射为 el-tree 的 CategoryNode */
+function mapTreeNode(node: CategoryTreeNode): CategoryNode {
+  return {
+    id: node.id,
+    label: node.name,
+    docCount: node.docCount,
+    icon: node.icon,
+    sort: node.sortOrder,
+    children: node.children?.map(mapTreeNode)
+  }
+}
+
+/** 加载分类树数据 */
+async function loadTree() {
+  try {
+    const res = await adminCategoryApi.getTree()
+    categoryTree.value = (res.data ?? []).map(mapTreeNode)
+  } catch {
+    // API 失败时使用 Mock 数据
+    categoryTree.value = mockTree
+  }
+}
+
+onMounted(() => {
+  loadTree()
+})
 
 // ==================== 计算属性 ====================
 
@@ -370,15 +403,32 @@ const handleCreate = () => {
 const handleSave = async () => {
   if (!formRef.value) return
 
-  await formRef.value.validate((valid) => {
+  await formRef.value.validate(async (valid) => {
     if (!valid) return
 
-    if (formData.value.id) {
-      // 编辑模式：更新已有节点
-      ElMessage.success(`分类「${formData.value.name}」已保存`)
-    } else {
-      // 新建模式
-      ElMessage.success(`分类「${formData.value.name}」已创建`)
+    try {
+      if (formData.value.id) {
+        // 编辑模式：调用更新 API
+        await adminCategoryApi.update(formData.value.id, {
+          name: formData.value.name,
+          parentId: formData.value.parentId || undefined,
+          icon: formData.value.icon,
+          sortOrder: formData.value.sort
+        })
+        ElMessage.success(`分类「${formData.value.name}」已保存`)
+      } else {
+        // 新建模式：调用创建 API
+        await adminCategoryApi.create({
+          name: formData.value.name,
+          parentId: formData.value.parentId || undefined,
+          icon: formData.value.icon,
+          sortOrder: formData.value.sort
+        })
+        ElMessage.success(`分类「${formData.value.name}」已创建`)
+      }
+      await loadTree()
+    } catch {
+      // API 失败时仍显示消息（拦截器已提示），不额外处理
     }
   })
 }
@@ -411,10 +461,12 @@ const handleDelete = async () => {
         type: 'warning'
       }
     )
+    await adminCategoryApi.delete(formData.value.id)
     ElMessage.success(`分类「${formData.value.name}」已删除`)
     handleCreate()
+    await loadTree()
   } catch {
-    // 用户取消删除，不做操作
+    // 用户取消删除或 API 失败，不做操作
   }
 }
 

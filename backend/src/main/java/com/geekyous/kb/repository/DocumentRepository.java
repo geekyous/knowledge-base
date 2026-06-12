@@ -54,4 +54,12 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
      * 统计指定状态的文档数量
      */
     long countByStatus(DocumentStatus status);
+
+    /** 统计未软删除的文档总数（仪表盘） */
+    @Query("SELECT COUNT(d) FROM Document d WHERE d.deletedAt IS NULL")
+    long countByDeletedAtIsNull();
+
+    /** 按分类统计文档数（分类树 docCount） */
+    @Query("SELECT COUNT(d) FROM Document d WHERE d.categoryId = :categoryId AND d.deletedAt IS NULL")
+    long countByCategoryIdAndNotDeleted(@Param("categoryId") Long categoryId);
 }
