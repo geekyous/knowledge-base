@@ -1,5 +1,6 @@
 package com.geekyous.kb.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -45,7 +46,8 @@ public class Document {
     @Column(name = "category_id")
     private Long categoryId;
 
-    /** 文档作者，多对一关联，延迟加载 */
+    /** 文档作者，多对一关联，延迟加载（@JsonIgnore 避免序列化 Hibernate 代理） */
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "author_id", nullable = false)
     private User author;
