@@ -65,14 +65,17 @@
       <div class="user-actions">
         <!-- v-if/v-else 条件渲染：根据登录状态显示不同内容 -->
         <template v-if="userStore.isLoggedIn">
-          <!-- 通知图标（带徽章数字） -->
-          <!--
-            el-badge: 徽章组件，用于显示通知数量
-            :hidden="notificationCount === 0" 当数量为 0 时隐藏徽章
-          -->
-          <el-badge :value="notificationCount" :hidden="notificationCount === 0" class="notification-badge">
-            <el-button :icon="Bell" circle @click="showNotifications" />
-          </el-badge>
+          <!-- 通知图标（接入 NotificationPanel 组件） -->
+          <NotificationPanel
+            v-model:visible="notificationVisible"
+            :count="notificationCount"
+            @update:count="notificationCount = $event"
+            @view-all="handleViewAllNotifications"
+          >
+            <el-badge :value="notificationCount" :hidden="notificationCount === 0" class="notification-badge">
+              <el-button :icon="Bell" circle />
+            </el-badge>
+          </NotificationPanel>
 
           <!-- 用户下拉菜单 -->
           <!--
@@ -126,7 +129,7 @@
 
 <script setup lang="ts">
 // 导入 Vue 的计算属性 API
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
 // 导入 Vue Router 的组合式 API
 // useRouter: 获取路由实例（用于编程式导航）
@@ -138,6 +141,9 @@ import { useUserStore } from '@/stores/user'
 
 // 导入 Element Plus 的消息提示和确认弹窗组件
 import { ElMessage, ElMessageBox } from 'element-plus'
+
+// 导入通知面板组件
+import NotificationPanel from '@/components/common/NotificationPanel.vue'
 
 // 导入 Element Plus 图标组件
 // 注意：虽然图标已在 main.ts 全局注册，这里显式导入是为了在 JS 中引用（如 :icon="Bell"）
@@ -166,15 +172,18 @@ const userStore = useUserStore()
 const activeMenu = computed(() => route.path)
 
 /**
- * 通知数量（计算属性）
- *
- * TODO: 后续需要从 store 或 API 获取实际通知数量
+ * 通知面板可见性
  */
-const notificationCount = computed(() => 0) // TODO: 从 store 获取
+const notificationVisible = ref(false)
 
-/** 显示通知面板（功能待开发） */
-const showNotifications = () => {
-  ElMessage.info('通知功能开发中')
+/**
+ * 通知未读数量（响应式，由 NotificationPanel 更新）
+ */
+const notificationCount = ref(2)
+
+/** 查看全部通知 */
+const handleViewAllNotifications = () => {
+  ElMessage.info('通知列表页开发中')
 }
 
 /**

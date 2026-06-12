@@ -42,6 +42,14 @@
       </div>
 
       <!-- ================================================================ -->
+      <!-- 内联错误提示区域（匹配原型：红色背景 banner + 图标） -->
+      <!-- ================================================================ -->
+      <div v-if="errorMsg" class="error-message">
+        <el-icon><CircleCloseFilled /></el-icon>
+        {{ errorMsg }}
+      </div>
+
+      <!-- ================================================================ -->
       <!-- 登录表单 -->
       <!-- ================================================================ -->
       <!--
@@ -131,6 +139,13 @@
           </el-button>
         </div>
       </div>
+
+      <!-- ================================================================ -->
+      <!-- 底部注册链接（匹配原型："还没有账号？立即注册"） -->
+      <!-- ================================================================ -->
+      <div class="register-link-area">
+        还没有账号？<router-link to="/register" class="register-link">立即注册</router-link>
+      </div>
     </div>
   </div>
 </template>
@@ -156,7 +171,7 @@ import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 
 // 导入页面中使用的图标
-import { Reading, User, Lock, Platform, ChatDotRound } from '@element-plus/icons-vue'
+import { Reading, User, Lock, Platform, ChatDotRound, CircleCloseFilled } from '@element-plus/icons-vue'
 
 // 获取路由实例和当前路由信息
 const router = useRouter()
@@ -181,6 +196,14 @@ const formRef = ref<FormInstance>()
  * 登录中时为 true，登录完成（成功或失败）后为 false。
  */
 const loading = ref(false)
+
+/**
+ * 内联错误提示信息
+ *
+ * 匹配原型：表单上方的红色 banner，登录失败时显示
+ * 登录成功或重新输入时自动清除
+ */
+const errorMsg = ref('')
 
 /**
  * 表单数据
@@ -257,6 +280,9 @@ const handleLogin = async () => {
     // 登录成功提示
     ElMessage.success('登录成功')
 
+    // 清除错误提示
+    errorMsg.value = ''
+
     // --------------------------------------------------------------------------
     // 跳转逻辑
     // --------------------------------------------------------------------------
@@ -267,10 +293,9 @@ const handleLogin = async () => {
     const redirect = (route.query.redirect as string) || '/home'
     router.push(redirect)
   } catch (error: any) {
-    // 登录失败：显示错误信息
-    // error.message 可能是后端返回的具体错误信息（如"密码错误"）
+    // 登录失败：显示内联错误提示（匹配原型红色 banner 样式）
     console.error('登录失败:', error)
-    ElMessage.error(error.message || '登录失败，请检查用户名和密码')
+    errorMsg.value = error.message || '登录失败，请检查用户名和密码'
   } finally {
     // 无论登录成功还是失败，都关闭 loading 状态
     // finally 块总是会执行，确保按钮恢复可点击状态
@@ -320,6 +345,20 @@ const handleLogin = async () => {
   }
 }
 
+/* 内联错误提示（匹配原型：红色背景 banner + 图标） */
+.error-message {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 /* 登录表单 */
 .login-form {
   /* :deep() 穿透修改 Element Plus 表单项的间距 */
@@ -337,6 +376,23 @@ const handleLogin = async () => {
     width: 100%;
     height: 44px;
     font-size: 16px;
+  }
+}
+
+/* 底部注册链接（匹配原型） */
+.register-link-area {
+  text-align: center;
+  font-size: 14px;
+  color: #909399;
+  margin-top: 16px;
+
+  .register-link {
+    color: #409eff;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
   }
 }
 

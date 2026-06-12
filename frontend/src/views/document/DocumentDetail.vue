@@ -4,86 +4,92 @@
 ================================================================================
 
 【文件说明】
-这是文档详情页面，展示一篇文档的完整内容。
+文档详情页面，展示一篇文档的完整内容。
 功能包括：
-1. 文档基本信息（标题、作者、日期、分类、标签、统计数据）
-2. Markdown 内容渲染（简易版）
-3. 点赞/取消点赞功能
-4. 相关文档推荐（侧边栏）
-5. 加载骨架屏（skeleton loading）
-6. 路由参数变化时重新加载数据（watch 监听）
+1. 面包屑导航（首页 / 文档管理 / 文档标题）
+2. 文档基本信息（标题、状态标签、作者、日期、分类、标签、统计数据）
+3. Markdown 内容渲染（使用 marked 库）
+4. TOC 目录侧边栏（从 Markdown 标题自动生成）
+5. 操作按钮（编辑、收藏、分享、版本历史、点赞）
+6. 相关文档推荐
+7. 加载骨架屏
 
-【Vue 概念】
-- 动态路由参数：route.params.id 获取文档 ID
-- computed 计算属性：实现 Markdown 到 HTML 的转换
-- watch 监听器：监听路由参数变化，重新加载数据
-- el-skeleton 骨架屏：加载状态优化用户体验
-- el-row/el-col 栅格布局：17:7 的两栏布局
-
-💡 学习要点:
-1. route.params.id 获取动态路由参数（如 /documents/123 中的 123）
-2. watch(() => route.params.id, callback) 监听路由参数变化
-3. computed 实现 Markdown 渲染（生产环境应使用 marked.js 等库）
-4. el-skeleton 提供加载占位效果，改善用户等待体验
-5. 侧边栏 position: sticky 实现滚动时固定效果
-6. v-html 渲染 HTML 内容（注意 XSS 安全性）
+【原型对照】
+- 原型位置：prototype-pc.html「文档详情页」屏幕（1833-1905 行）
+- 面包屑：首页 / 文档管理 / 文档标题
+- 标题 + 状态标签（"已发布"）
+- 元信息行：作者 / 分类 / 日期 / 浏览量 / 点赞数
+- 标签列表
+- 操作按钮：编辑 / 收藏 / 分享 / 版本历史
+- 内容区 + 右侧 TOC 目录（高亮当前位置）
 ================================================================================
 -->
 
 <template>
   <div class="document-detail-page">
-    <!-- ================================================================== -->
-    <!-- 加载状态：骨架屏 -->
-    <!-- ================================================================== -->
-    <!--
-      el-skeleton: Element Plus 的骨架屏组件
-      :rows="12" 显示 12 行骨架占位
-      animated 启用闪烁动画
-    -->
+    <!-- 加载骨架屏 -->
     <div class="loading-wrapper" v-if="loading">
       <el-skeleton :rows="12" animated />
     </div>
 
-    <!-- ================================================================== -->
-    <!-- 文档内容（加载完成且有数据时） -->
-    <!-- ================================================================== -->
+    <!-- 文档内容 -->
     <template v-else-if="document">
-      <!-- 返回按钮 -->
-      <div class="back-row">
-        <el-button @click="goBack" :icon="ArrowLeft">返回列表</el-button>
-      </div>
+      <!-- ================================================================ -->
+      <!-- 面包屑导航（匹配原型：首页 / 文档管理 / 文档标题） -->
+      <!-- ================================================================ -->
+      <el-breadcrumb separator="/" class="breadcrumb">
+        <el-breadcrumb-item :to="{ path: '/home' }">首页</el-breadcrumb-item>
+        <el-breadcrumb-item :to="{ path: '/documents' }">文档管理</el-breadcrumb-item>
+        <el-breadcrumb-item>{{ document.title }}</el-breadcrumb-item>
+      </el-breadcrumb>
 
-      <!--
-        Element Plus 栅格布局（el-row + el-col）
-        :gutter="24" 列之间的间距为 24px
-        :span="17" 主内容占 24 栏中的 17 栏
-        :span="7" 侧边栏占 24 栏中的 7 栏
-      -->
+      <!-- ================================================================ -->
+      <!-- 两栏布局：主内容 + 侧边栏 -->
+      <!-- ================================================================ -->
       <el-row :gutter="24">
         <!-- 主内容区（左侧，占 17/24） -->
         <el-col :span="17">
           <!-- 文档头部信息 -->
           <el-card class="doc-header-card" shadow="never">
-            <h1 class="doc-title">{{ document.title }}</h1>
+            <!-- 标题 + 状态标签（匹配原型） -->
+            <div class="title-row">
+              <h1 class="doc-title">{{ document.title }}</h1>
+              <el-tag
+                :type="statusTagType"
+                size="default"
+                effect="dark"
+                class="status-tag"
+              >
+                {{ statusText }}
+              </el-tag>
+            </div>
+
             <!-- 元信息行 -->
             <div class="doc-meta">
               <span class="meta-item">
                 <el-icon><User /></el-icon>
                 {{ document.author?.username || '未知作者' }}
               </span>
+              <span v-if="document.category" class="meta-item">
+                <el-icon><Folder /></el-icon>
+                {{ document.category.name }}
+              </span>
               <span class="meta-item">
                 <el-icon><Calendar /></el-icon>
                 {{ formatDate(document.createdAt) }}
               </span>
-              <!-- 分类标签 -->
-              <el-tag
-                v-if="document.category"
-                size="small"
-                effect="plain"
-              >
-                {{ document.category.name }}
-              </el-tag>
-              <!-- 标签列表：v-for 遍历 tags 数组 -->
+              <span class="meta-item">
+                <el-icon><View /></el-icon>
+                {{ document.viewCount }}
+              </span>
+              <span class="meta-item">
+                <el-icon><Star /></el-icon>
+                {{ document.likeCount }}
+              </span>
+            </div>
+
+            <!-- 标签列表 -->
+            <div v-if="document.tags?.length" class="doc-tags">
               <el-tag
                 v-for="tag in document.tags"
                 :key="tag"
@@ -95,50 +101,74 @@
                 {{ tag }}
               </el-tag>
             </div>
-            <!-- 统计数据 -->
-            <div class="doc-stats">
-              <span class="stat-item">
-                <el-icon><View /></el-icon>
-                {{ document.viewCount }} 次浏览
-              </span>
-              <span class="stat-item">
+
+            <!-- 操作按钮（匹配原型：编辑/收藏/分享/版本历史） -->
+            <div class="action-buttons">
+              <el-button type="primary" @click="editDocument">
+                <el-icon><Edit /></el-icon>
+                编辑
+              </el-button>
+              <el-button :type="bookmarked ? 'warning' : 'default'" @click="toggleBookmark">
                 <el-icon><Star /></el-icon>
-                {{ document.likeCount }} 次点赞
-              </span>
-              <span class="stat-item">
-                <el-icon><ChatDotRound /></el-icon>
-                {{ document.commentCount }} 条评论
-              </span>
+                {{ bookmarked ? '已收藏' : '收藏' }}
+              </el-button>
+              <el-button @click="shareDocument">
+                <el-icon><Share /></el-icon>
+                分享
+              </el-button>
+              <el-button @click="viewHistory">
+                <el-icon><Clock /></el-icon>
+                版本历史
+              </el-button>
+              <el-button
+                :type="liked ? 'primary' : 'default'"
+                @click="toggleLike"
+                class="like-btn"
+              >
+                <el-icon><Star /></el-icon>
+                {{ liked ? '已点赞' : '点赞' }} ({{ document.likeCount }})
+              </el-button>
             </div>
           </el-card>
 
           <!-- 文档正文内容 -->
           <el-card class="doc-content-card" shadow="never">
-            <!--
-              v-html 渲染 computed 计算属性生成的 HTML
-              renderedContent 将 Markdown 文本转换为 HTML 标签
-            -->
-            <div class="markdown-body" v-html="renderedContent"></div>
+            <div ref="contentRef" class="markdown-body" v-html="renderedContent" />
           </el-card>
-
-          <!-- 操作栏（点赞按钮） -->
-          <div class="action-bar">
-            <el-button
-              :type="liked ? 'primary' : 'default'"
-              @click="toggleLike"
-            >
-              <el-icon><Star /></el-icon>
-              {{ liked ? '已点赞' : '点赞' }} ({{ document.likeCount }})
-            </el-button>
-          </div>
         </el-col>
 
+        <!-- ================================================================ -->
         <!-- 侧边栏（右侧，占 7/24） -->
+        <!-- ================================================================ -->
         <el-col :span="7">
+          <!-- TOC 目录（匹配原型：从标题自动生成） -->
+          <el-card v-if="tocItems.length > 0" class="sidebar-card toc-card" shadow="never">
+            <template #header>
+              <span class="sidebar-title">
+                <el-icon><List /></el-icon>
+                目录
+              </span>
+            </template>
+            <div class="toc-list">
+              <a
+                v-for="(item, index) in tocItems"
+                :key="index"
+                :href="'#heading-' + index"
+                :class="['toc-item', 'toc-level-' + item.level, { active: activeHeading === index }]"
+                @click.prevent="scrollToHeading(index)"
+              >
+                {{ item.text }}
+              </a>
+            </div>
+          </el-card>
+
           <!-- 相关文档推荐 -->
           <el-card class="sidebar-card" shadow="never">
             <template #header>
-              <span class="sidebar-title">相关文档</span>
+              <span class="sidebar-title">
+                <el-icon><Connection /></el-icon>
+                相关文档
+              </span>
             </template>
             <div class="related-list">
               <div
@@ -161,9 +191,7 @@
       </el-row>
     </template>
 
-    <!-- ================================================================== -->
-    <!-- 文档不存在时的提示 -->
-    <!-- ================================================================== -->
+    <!-- 文档不存在 -->
     <el-empty v-else description="文档不存在或已被删除" :image-size="160">
       <el-button type="primary" @click="$router.push('/documents')">返回文档列表</el-button>
     </el-empty>
@@ -171,53 +199,53 @@
 </template>
 
 <script setup lang="ts">
-// 导入说明：
-// - ref: 响应式引用
-// - computed: 计算属性（缓存计算结果）
-// - onMounted: 生命周期钩子
-// - watch: 侦听器（监听数据变化）
-import { ref, computed, onMounted, watch } from 'vue'
-
-// 导入路由 API
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-
-// 导入消息提示
 import { ElMessage } from 'element-plus'
-
-// 导入图标
 import {
-  ArrowLeft,
-  User,
-  Calendar,
-  View,
-  Star,
-  ChatDotRound
+  User, Calendar, View, Star, Folder, Edit, Share, Clock, List, Connection
 } from '@element-plus/icons-vue'
-
-// 导入文档 API
 import { documentApi } from '@/api/document'
-
-// 导入文档类型
+import { useUserStore } from '@/stores/user'
+import { marked } from 'marked'
+import DOMPurify from 'dompurify'
 import type { Document } from '@/types'
 
 const router = useRouter()
 const route = useRoute()
+const userStore = useUserStore()
 
-// ==================== 响应式状态 ====================
-
-/** 加载状态：初始为 true（页面打开即开始加载） */
 const loading = ref(true)
-
-/** 文档详情数据（null 表示未获取到或不存在） */
 const document = ref<Document | null>(null)
-
-/** 当前用户是否已点赞 */
 const liked = ref(false)
+const bookmarked = ref(false)
+const activeHeading = ref(0)
+const contentRef = ref<HTMLElement>()
 
-/** 相关文档列表 */
 const relatedDocs = ref<{ id: number; title: string; viewCount: number }[]>([])
 
-/** 日期格式化（带中文年月日） */
+// 状态标签映射
+const statusTagType = computed(() => {
+  const map: Record<string, string> = {
+    PUBLISHED: 'success',
+    DRAFT: 'info',
+    PENDING: 'warning',
+    REJECTED: 'danger'
+  }
+  return map[document.value?.status || ''] || 'info'
+})
+
+const statusText = computed(() => {
+  const map: Record<string, string> = {
+    PUBLISHED: '已发布',
+    DRAFT: '草稿',
+    PENDING: '审核中',
+    REJECTED: '已拒绝'
+  }
+  return map[document.value?.status || ''] || '未知'
+})
+
+// 日期格式化
 const formatDate = (dateStr: string) => {
   const date = new Date(dateStr)
   return date.toLocaleDateString('zh-CN', {
@@ -227,45 +255,118 @@ const formatDate = (dateStr: string) => {
   })
 }
 
-// Markdown → HTML 转换（计算属性）
-//
-// 使用 computed 创建缓存计算属性。
-// 只有 document.value?.content 变化时才重新计算。
-//
-// 注意：这是一个简易的正则替换实现，仅支持基本的 Markdown 语法。
-// 生产环境应该使用 marked.js、markdown-it 等专业库。
-//
-// 正则说明：
-// - /^### (.*$)/gim: 匹配三级标题
-// - /\*\*(.*?)\*\* /gim: 匹配加粗
-// - /\*(.*?)\* /gim: 匹配斜体
-// - /`(.*?)`/gim: 匹配行内代码
+// TOC 目录：从 Markdown 内容提取标题
+const tocItems = computed(() => {
+  const content = document.value?.content || ''
+  const headings: { level: number; text: string }[] = []
+  const regex = /^(#{1,4})\s+(.+)$/gm
+  let match
+  while ((match = regex.exec(content)) !== null) {
+    headings.push({
+      level: match[1].length,
+      text: match[2].replace(/\*\*/g, '').replace(/`/g, '')
+    })
+  }
+  return headings
+})
+
+// Markdown 渲染（使用 marked + DOMPurify，为标题添加 id）
 const renderedContent = computed(() => {
   const content = document.value?.content || ''
   if (!content) return '<p style="color: #909399;">暂无内容</p>'
 
-  // Basic markdown conversion
-  return content
-    .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-    .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-    .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-    .replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>')
-    .replace(/\*(.*?)\*/gim, '<em>$1</em>')
-    .replace(/`(.*?)`/gim, '<code>$1</code>')
-    .replace(/\n\n/g, '</p><p>')
-    .replace(/\n/g, '<br>')
-    .replace(/^/, '<p>')
-    .replace(/$/, '</p>')
+  // 为标题添加 id 以支持 TOC 跳转
+  let headingIndex = 0
+  const renderer = new marked.Renderer()
+  const originalHeading = renderer.heading.bind(renderer)
+  renderer.heading = function (text: string, level: number, raw: string) {
+    const id = `heading-${headingIndex++}`
+    return `<h${level} id="${id}">${text}</h${level}>`
+  }
+
+  marked.setOptions({ renderer })
+  const html = marked(content) as string
+  return DOMPurify.sanitize(html)
 })
 
-/**
- * 获取文档详情
- *
- * 从路由参数获取文档 ID，调用 API 获取详情数据。
- * 如果 ID 无效（NaN），直接结束加载。
- */
+// 滚动到指定标题
+const scrollToHeading = (index: number) => {
+  activeHeading.value = index
+  const el = document.getElementById(`heading-${index}`)
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+}
+
+// 监听滚动，高亮当前目录项
+const handleScroll = () => {
+  for (let i = tocItems.value.length - 1; i >= 0; i--) {
+    const el = document.getElementById(`heading-${i}`)
+    if (el) {
+      const rect = el.getBoundingClientRect()
+      if (rect.top <= 120) {
+        activeHeading.value = i
+        return
+      }
+    }
+  }
+  activeHeading.value = 0
+}
+
+// 操作方法
+const editDocument = () => {
+  router.push(`/documents/${document.value?.id}/edit`)
+}
+
+const toggleBookmark = () => {
+  bookmarked.value = !bookmarked.value
+  ElMessage.success(bookmarked.value ? '已收藏' : '已取消收藏')
+}
+
+const shareDocument = () => {
+  const url = window.location.href
+  navigator.clipboard.writeText(url).then(() => {
+    ElMessage.success('链接已复制到剪贴板')
+  }).catch(() => {
+    ElMessage.success('分享链接：' + url)
+  })
+}
+
+const viewHistory = () => {
+  ElMessage.info('版本历史功能开发中')
+}
+
+const toggleLike = async () => {
+  if (!document.value) return
+  try {
+    if (liked.value) {
+      await documentApi.unlike(document.value.id)
+      document.value.likeCount--
+    } else {
+      await documentApi.like(document.value.id)
+      document.value.likeCount++
+    }
+    liked.value = !liked.value
+  } catch {
+    if (liked.value) {
+      document.value.likeCount--
+    } else {
+      document.value.likeCount++
+    }
+    liked.value = !liked.value
+    ElMessage.success(liked.value ? '已点赞' : '已取消点赞')
+  }
+}
+
+const goBack = () => {
+  router.push('/documents')
+}
+
+const goToDocument = (id: number) => {
+  router.push(`/documents/${id}`)
+}
+
 const fetchDocument = async () => {
-  // route.params.id 对应路由定义中的 path: 'documents/:id'
   const id = Number(route.params.id)
   if (isNaN(id)) {
     loading.value = false
@@ -278,12 +379,11 @@ const fetchDocument = async () => {
     document.value = res.data
   } catch (error) {
     console.error('获取文档详情失败:', error)
-    // Fallback mock data
     document.value = {
       id: id,
       title: '员工手册 - 年假制度',
       summary: '本文档详细说明了公司年假制度的相关规定',
-      content: `## 年假制度\n\n根据公司规定，员工入职满一年后可享受带薪年假。\n\n### 年假天数\n\n- 工龄 1-5 年：每年 5 天年假\n- 工龄 5-10 年：每年 10 天年假\n- 工龄 10 年以上：每年 15 天年假\n\n### 申请流程\n\n1. 登录 OA 系统\n2. 进入「假期管理」模块\n3. 选择「年假申请」\n4. 填写起止日期和事由\n5. 提交审批\n\n### 注意事项\n\n- 年假需**提前3个工作日**申请\n- 当年未使用的年假不可累积至下一年\n- 法定节假日和周末不计入年假天数\n\n如有疑问，请联系 HR 部门。`,
+      content: `## 年假制度\n\n根据公司规定，员工入职满一年后可享受带薪年假。\n\n### 年假天数\n\n- 工龄 1-5 年：每年 5 天年假\n- 工龄 5-10 年：每年 10 天年假\n- 工龄 10 年以上：每年 15 天年假\n\n### 申请流程\n\n1. 登录 OA 系统\n2. 进入「假期管理」模块\n3. 选择「年假申请」\n4. 填写起止日期和事由\n5. 提交审批\n\n### 注意事项\n\n- 年假需**提前3个工作日**申请\n- 当年未使用的年假不可累积至下一年\n- 法定节假日和周末不计入年假天数\n\n### 回滚方案\n\n如需撤销年假申请，请在审批前联系 HR 部门处理。\n\n### 附录\n\n详细条款请参考《员工手册》第三章。如有疑问，请联系 HR 部门。`,
       status: 'PUBLISHED',
       category: { id: 1, name: '人事制度', slug: 'hr', sortOrder: 1, status: 'ACTIVE', createdAt: '2025-01-01' },
       author: { id: 1, username: 'HR部门' },
@@ -297,10 +397,12 @@ const fetchDocument = async () => {
     }
   } finally {
     loading.value = false
+    nextTick(() => {
+      window.addEventListener('scroll', handleScroll)
+    })
   }
 }
 
-/** 获取相关文档（根据同分类查找） */
 const fetchRelated = async () => {
   try {
     const res = await documentApi.getList({
@@ -310,8 +412,8 @@ const fetchRelated = async () => {
       status: 'PUBLISHED'
     })
     relatedDocs.value = res.data.items
-      .filter((d: Document) => d.id !== document.value?.id)  // 排除当前文档
-      .slice(0, 4)                                             // 最多显示 4 个
+      .filter((d: Document) => d.id !== document.value?.id)
+      .slice(0, 4)
       .map((d: Document) => ({ id: d.id, title: d.title, viewCount: d.viewCount }))
   } catch {
     relatedDocs.value = [
@@ -322,68 +424,13 @@ const fetchRelated = async () => {
   }
 }
 
-/**
- * 切换点赞状态
- *
- * 先调用 API，成功后更新本地状态。
- * API 失败时仍然更新本地状态（乐观更新的降级方案），
- * 并给出成功提示让用户感知到操作已完成。
- */
-const toggleLike = async () => {
-  if (!document.value) return
-  try {
-    if (liked.value) {
-      await documentApi.unlike(document.value.id)
-      document.value.likeCount--
-    } else {
-      await documentApi.like(document.value.id)
-      document.value.likeCount++
-    }
-    liked.value = !liked.value
-  } catch {
-    // Toggle locally even if API fails
-    if (liked.value) {
-      document.value.likeCount--
-    } else {
-      document.value.likeCount++
-    }
-    liked.value = !liked.value
-    ElMessage.success(liked.value ? '已点赞' : '已取消点赞')
-  }
-}
-
-/** 返回文档列表 */
-const goBack = () => {
-  router.push('/documents')
-}
-
-/** 跳转到其他文档详情 */
-const goToDocument = (id: number) => {
-  router.push(`/documents/${id}`)
-}
-
-/**
- * watch 监听器：监听路由参数变化
- *
- * 应用场景：用户在文档详情页点击"相关文档"跳转到另一篇文档时，
- * 组件不会重新创建（复用同一个组件实例），所以需要手动监听
- * route.params.id 的变化来重新加载数据。
- *
- * 这是 Vue Router 的常见模式：同一个组件对应不同的路由参数时，
- * 需要用 watch 监听参数变化来响应更新。
- */
 watch(() => route.params.id, () => {
   if (route.params.id) {
+    window.removeEventListener('scroll', handleScroll)
     fetchDocument()
   }
 })
 
-/**
- * 组件挂载时加载数据
- *
- * 先获取文档详情，再获取相关文档。
- * 使用 await 确保顺序执行（相关文档需要文档的分类 ID）。
- */
 onMounted(async () => {
   await fetchDocument()
   fetchRelated()
@@ -398,13 +445,13 @@ onMounted(async () => {
   padding: 24px 20px;
 }
 
-/* 加载状态区域 */
+/* 加载状态 */
 .loading-wrapper {
   padding: 40px 0;
 }
 
-/* 返回按钮 */
-.back-row {
+/* 面包屑导航 */
+.breadcrumb {
   margin-bottom: 16px;
 }
 
@@ -412,12 +459,25 @@ onMounted(async () => {
 .doc-header-card {
   margin-bottom: 20px;
 
-  .doc-title {
-    font-size: 24px;
-    font-weight: 600;
-    color: #303133;
-    margin: 0 0 16px;
-    line-height: 1.4;
+  .title-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 16px;
+
+    .doc-title {
+      font-size: 24px;
+      font-weight: 600;
+      color: #1e293b;
+      margin: 0;
+      line-height: 1.4;
+      flex: 1;
+    }
+
+    .status-tag {
+      flex-shrink: 0;
+      margin-top: 4px;
+    }
   }
 
   .doc-meta {
@@ -432,24 +492,27 @@ onMounted(async () => {
       align-items: center;
       gap: 4px;
       font-size: 13px;
-      color: #606266;
-    }
-
-    .doc-tag {
-      margin-left: 0;
+      color: #64748b;
     }
   }
 
-  .doc-stats {
+  .doc-tags {
     display: flex;
-    gap: 24px;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 16px;
+  }
 
-    .stat-item {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 13px;
-      color: #909399;
+  /* 操作按钮（匹配原型） */
+  .action-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding-top: 12px;
+    border-top: 1px solid #e2e8f0;
+
+    .like-btn {
+      margin-left: auto;
     }
   }
 }
@@ -458,25 +521,23 @@ onMounted(async () => {
 .doc-content-card {
   margin-bottom: 20px;
 
-  /* Markdown 渲染样式 */
   .markdown-body {
     font-size: 15px;
     line-height: 1.8;
-    color: #303133;
+    color: #1e293b;
 
-    /* :deep() 穿透样式，控制 v-html 渲染的 HTML 元素 */
     :deep(h1) {
       font-size: 24px;
       margin: 24px 0 16px;
       padding-bottom: 8px;
-      border-bottom: 1px solid #e4e7ed;
+      border-bottom: 1px solid #e2e8f0;
     }
 
     :deep(h2) {
       font-size: 20px;
       margin: 20px 0 12px;
       padding-bottom: 6px;
-      border-bottom: 1px solid #ebeef5;
+      border-bottom: 1px solid #f1f5f9;
     }
 
     :deep(h3) {
@@ -486,10 +547,11 @@ onMounted(async () => {
 
     :deep(p) {
       margin: 0 0 12px;
+      color: #475569;
     }
 
     :deep(code) {
-      background: #f5f7fa;
+      background: #f1f5f9;
       padding: 2px 6px;
       border-radius: 4px;
       font-size: 13px;
@@ -499,6 +561,7 @@ onMounted(async () => {
     :deep(ol), :deep(ul) {
       padding-left: 24px;
       margin: 0 0 12px;
+      color: #475569;
     }
 
     :deep(li) {
@@ -506,61 +569,88 @@ onMounted(async () => {
     }
 
     :deep(strong) {
-      color: #409eff;
+      color: #1e293b;
     }
   }
 }
 
-/* 操作栏 */
-.action-bar {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 32px;
-}
-
 /* 侧边栏卡片 */
 .sidebar-card {
-  /* sticky 定位：滚动时固定在视口中 */
   position: sticky;
   top: 80px;
+  margin-bottom: 16px;
 
   .sidebar-title {
-    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 15px;
     font-weight: 600;
+    color: #1e293b;
   }
+}
 
-  .related-list {
-    .related-item {
-      padding: 10px 0;
-      border-bottom: 1px solid #f0f2f5;
-      cursor: pointer;
-      transition: color 0.2s;
+/* TOC 目录样式 */
+.toc-list {
+  .toc-item {
+    display: block;
+    padding: 6px 0;
+    font-size: 13px;
+    color: #64748b;
+    text-decoration: none;
+    border-left: 2px solid transparent;
+    padding-left: 8px;
+    transition: all 0.2s;
+    cursor: pointer;
+    line-height: 1.5;
 
-      &:last-child {
-        border-bottom: none;
-      }
+    &:hover {
+      color: #2563eb;
+    }
 
-      &:hover {
-        color: #409eff;
+    &.active {
+      color: #2563eb;
+      border-left-color: #2563eb;
+      font-weight: 500;
+    }
 
-        .related-title {
-          color: #409eff;
-        }
-      }
+    &.toc-level-1 { padding-left: 8px; }
+    &.toc-level-2 { padding-left: 8px; }
+    &.toc-level-3 { padding-left: 20px; font-size: 12px; }
+    &.toc-level-4 { padding-left: 32px; font-size: 12px; }
+  }
+}
 
+/* 相关文档列表 */
+.related-list {
+  .related-item {
+    padding: 10px 0;
+    border-bottom: 1px solid #f1f5f9;
+    cursor: pointer;
+    transition: color 0.2s;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    &:hover {
       .related-title {
-        font-size: 14px;
-        font-weight: 500;
-        color: #303133;
-        margin: 0 0 4px;
-        line-height: 1.4;
-        transition: color 0.2s;
+        color: #2563eb;
       }
+    }
 
-      .related-meta {
-        font-size: 12px;
-        color: #909399;
-      }
+    .related-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: #1e293b;
+      margin: 0 0 4px;
+      line-height: 1.4;
+      transition: color 0.2s;
+    }
+
+    .related-meta {
+      font-size: 12px;
+      color: #94a3b8;
     }
   }
 }

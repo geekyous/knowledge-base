@@ -70,53 +70,73 @@
     </div>
 
     <!-- ================================================================== -->
-    <!-- 筛选区域 -->
+    <!-- 操作栏 + 筛选区域（匹配原型：新建/上传按钮 + 筛选下拉 + 排序） -->
     <!-- ================================================================== -->
     <div class="filter-section">
       <div class="filter-bar">
-        <!--
-          分类筛选下拉框
-          @change="fetchDocuments" 选中项变化时重新获取文档列表
-        -->
-        <el-select
-          v-model="filters.categoryId"
-          placeholder="全部分类"
-          clearable
-          @change="fetchDocuments"
-        >
-          <el-option
-            v-for="cat in categoryOptions"
-            :key="cat.value"
-            :label="cat.label"
-            :value="cat.value"
-          />
-        </el-select>
+        <!-- 左侧：操作按钮 -->
+        <div class="filter-actions">
+          <el-button type="primary" @click="createDocument">
+            <el-icon><Plus /></el-icon>
+            新建文档
+          </el-button>
+          <el-button @click="uploadDialogVisible = true">
+            <el-icon><Upload /></el-icon>
+            上传文件
+          </el-button>
+        </div>
 
-        <!-- 状态筛选下拉框 -->
-        <el-select
-          v-model="filters.status"
-          placeholder="全部状态"
-          clearable
-          @change="fetchDocuments"
-        >
-          <el-option label="草稿" value="DRAFT" />
-          <el-option label="待审核" value="PENDING" />
-          <el-option label="已发布" value="PUBLISHED" />
-          <el-option label="已归档" value="ARCHIVED" />
-        </el-select>
+        <!-- 右侧：筛选 + 搜索 + 排序 -->
+        <div class="filter-controls">
+          <el-select
+            v-model="filters.categoryId"
+            placeholder="全部分类"
+            clearable
+            @change="fetchDocuments"
+          >
+            <el-option
+              v-for="cat in categoryOptions"
+              :key="cat.value"
+              :label="cat.label"
+              :value="cat.value"
+            />
+          </el-select>
 
-        <!-- 关键词搜索输入框 -->
-        <el-input
-          v-model="filters.keyword"
-          placeholder="搜索文档..."
-          clearable
-          class="filter-search"
-          @keyup.enter="fetchDocuments"
-        >
-          <template #prefix>
-            <el-icon><Search /></el-icon>
-          </template>
-        </el-input>
+          <el-select
+            v-model="filters.status"
+            placeholder="全部状态"
+            clearable
+            @change="fetchDocuments"
+          >
+            <el-option label="草稿" value="DRAFT" />
+            <el-option label="待审核" value="PENDING" />
+            <el-option label="已发布" value="PUBLISHED" />
+            <el-option label="已归档" value="ARCHIVED" />
+          </el-select>
+
+          <!-- 排序下拉（匹配原型：最新更新/最多浏览/最多点赞） -->
+          <el-select
+            v-model="sortBy"
+            @change="fetchDocuments"
+            style="width: 130px"
+          >
+            <el-option label="最新更新" value="updatedAt" />
+            <el-option label="最多浏览" value="viewCount" />
+            <el-option label="最多点赞" value="likeCount" />
+          </el-select>
+
+          <el-input
+            v-model="filters.keyword"
+            placeholder="搜索文档..."
+            clearable
+            class="filter-search"
+            @keyup.enter="fetchDocuments"
+          >
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+          </el-input>
+        </div>
       </div>
     </div>
 
@@ -143,6 +163,15 @@
               >
                 {{ statusLabel(doc.status) }}
               </el-tag>
+              <!-- 操作按钮（匹配原型：编辑/删除，阻止冒泡） -->
+              <div class="doc-actions" @click.stop>
+                <el-button text size="small" @click="editDocument(doc.id)">
+                  <el-icon><Edit /></el-icon>
+                </el-button>
+                <el-button text size="small" class="delete-btn" @click="deleteDocument(doc)">
+                  <el-icon><Delete /></el-icon>
+                </el-button>
+              </div>
             </div>
             <p class="doc-summary">{{ doc.summary || '暂无摘要' }}</p>
             <div class="doc-meta">
@@ -203,6 +232,18 @@
         @current-change="fetchDocuments"
       />
     </div>
+
+    <!-- ================================================================== -->
+    <!-- 文件上传弹窗 -->
+    <!-- ================================================================== -->
+    <el-dialog
+      v-model="uploadDialogVisible"
+      title="上传文件"
+      width="680px"
+      destroy-on-close
+    >
+      <FileUpload />
+    </el-dialog>
   </div>
 </template>
 
@@ -220,11 +261,21 @@ import {
   View,
   User,
   ChatDotRound,
-  Calendar
+  Calendar,
+  Plus,
+  Upload,
+  Edit,
+  Delete
 } from '@element-plus/icons-vue'
 
 // 导入文档 API
 import { documentApi } from '@/api/document'
+
+// 导入消息提示和确认框
+import { ElMessage, ElMessageBox } from 'element-plus'
+
+// 导入文件上传组件
+import FileUpload from '@/components/common/FileUpload.vue'
 
 // 导入文档类型
 import type { Document } from '@/types'
@@ -265,6 +316,12 @@ const filters = reactive({
   status: undefined as string | undefined,
   keyword: ''
 })
+
+/** 排序方式（匹配原型：最新更新/最多浏览/最多点赞） */
+const sortBy = ref('updatedAt')
+
+/** 文件上传弹窗可见性 */
+const uploadDialogVisible = ref(false)
 
 /** 分类选项（静态数据） */
 const categoryOptions = [
@@ -435,6 +492,37 @@ const goToDocument = (id: number) => {
   router.push(`/documents/${id}`)
 }
 
+/** 新建文档 */
+const createDocument = () => {
+  router.push('/documents/new/edit')
+}
+
+/** 编辑文档 */
+const editDocument = (id: number) => {
+  router.push(`/documents/${id}/edit`)
+}
+
+/** 删除文档（确认弹窗） */
+const deleteDocument = async (doc: Document) => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除文档「${doc.title}」吗？此操作不可恢复。`,
+      '删除确认',
+      { confirmButtonText: '删除', cancelButtonText: '取消', type: 'warning' }
+    )
+    await documentApi.delete(doc.id)
+    ElMessage.success('文档已删除')
+    fetchDocuments()
+  } catch {
+    // 用户取消或删除失败
+  }
+}
+
+/** 上传文件提示 */
+const showUploadHint = () => {
+  uploadDialogVisible.value = true
+}
+
 /** 重置所有筛选条件 */
 const resetFilters = () => {
   filters.categoryId = undefined
@@ -545,14 +633,26 @@ onMounted(() => {
 .filter-section {
   margin-bottom: 20px;
 
-  /* flex 布局排列筛选控件 */
   .filter-bar {
     display: flex;
-    gap: 12px;
+    justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
 
-    .filter-search {
-      max-width: 240px;
+    .filter-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .filter-controls {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+
+      .filter-search {
+        max-width: 240px;
+      }
     }
   }
 }
@@ -575,11 +675,10 @@ onMounted(() => {
 
   .doc-main {
     .doc-info {
-      /* 标题行：标题和状态标签左右排列 */
+      /* 标题行：标题、状态标签和操作按钮 */
       .doc-title-row {
         display: flex;
         align-items: center;
-        justify-content: space-between;
         gap: 12px;
         margin-bottom: 8px;
 
@@ -590,6 +689,21 @@ onMounted(() => {
           margin: 0;
           flex: 1;
         }
+
+        .doc-actions {
+          display: flex;
+          gap: 0;
+          opacity: 0;
+          transition: opacity 0.2s;
+
+          .delete-btn {
+            color: #ef4444;
+          }
+        }
+      }
+
+      &:hover .doc-actions {
+        opacity: 1;
       }
 
       /* 摘要两行截断 */
