@@ -106,10 +106,9 @@ services:
         condition: service_healthy
       elasticsearch:
         condition: service_healthy
-    # Actuator 健康检查路径受 context-path (/api) 影响
-    # 实际路径为 /api/actuator/health
+    # Actuator 健康检查无 context-path，直接访问
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/api/actuator/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
       interval: 15s      # 每 15s 检查一次
       timeout: 5s        # 单次检查超时 5s
       retries: 5         # 连续失败 5 次才标记为 unhealthy

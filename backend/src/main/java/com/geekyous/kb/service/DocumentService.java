@@ -2,6 +2,7 @@ package com.geekyous.kb.service;
 
 import com.geekyous.kb.entity.Document;
 import com.geekyous.kb.entity.Document.DocumentStatus;
+import com.geekyous.kb.exception.BusinessException;
 import com.geekyous.kb.repository.DocumentRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -61,7 +62,7 @@ public class DocumentService {
      */
     public Document getDocument(Long id) {
         return documentRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("文档不存在"));
+                .orElseThrow(() -> new BusinessException(404, "文档不存在"));
     }
 
     /**

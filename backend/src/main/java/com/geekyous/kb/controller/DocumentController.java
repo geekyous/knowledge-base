@@ -1,9 +1,12 @@
 package com.geekyous.kb.controller;
 
 import com.geekyous.kb.annotation.RateLimit;
+import com.geekyous.kb.config.JwtAuthenticationFilter;
 import com.geekyous.kb.dto.request.CreateDocumentRequest;
 import com.geekyous.kb.dto.request.UpdateDocumentRequest;
 import com.geekyous.kb.entity.Document;
+import com.geekyous.kb.entity.User;
+import com.geekyous.kb.repository.UserRepository;
 import com.geekyous.kb.service.DocumentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -11,6 +14,8 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import org.springframework.data.domain.Page;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,9 +32,11 @@ import org.springframework.web.bind.annotation.*;
 public class DocumentController {
 
     private final DocumentService documentService;
+    private final UserRepository userRepository;
 
-    public DocumentController(DocumentService documentService) {
+    public DocumentController(DocumentService documentService, UserRepository userRepository) {
         this.documentService = documentService;
+        this.userRepository = userRepository;
     }
 
     @GetMapping
@@ -52,7 +59,8 @@ public class DocumentController {
     @PostMapping
     @Operation(summary = "创建文档")
     public Document create(@RequestBody @Valid CreateDocumentRequest request) {
-        return documentService.createDocument(toEntity(request));
+        User author = getCurrentUser();
+        return documentService.createDocument(toEntity(request, author));
     }
 
     @PutMapping("/{id}")
@@ -83,13 +91,22 @@ public class DocumentController {
         return documentService.getPopularDocuments(page, size);
     }
 
-    private Document toEntity(CreateDocumentRequest req) {
+    private Document toEntity(CreateDocumentRequest req, User author) {
         return Document.builder()
                 .title(req.getTitle())
                 .summary(req.getSummary())
                 .content(req.getContent())
                 .categoryId(req.getCategoryId())
+                .author(author)
                 .build();
+    }
+
+    /** 从 SecurityContext 获取当前登录用户实体 */
+    private User getCurrentUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        JwtAuthenticationFilter.UserDetails details = (JwtAuthenticationFilter.UserDetails) auth.getPrincipal();
+        return userRepository.findById(details.id())
+                .orElseThrow(() -> new RuntimeException("用户不存在"));
     }
 
     private Document toEntity(UpdateDocumentRequest req) {
