@@ -58,6 +58,26 @@ const routes: RouteRecordRaw[] = [
   },
 
   // --------------------------------------------------------------------------
+  // 注册页路由（独立页面，与登录页同级）
+  // --------------------------------------------------------------------------
+  {
+    path: '/register',
+    name: 'Register',
+    component: () => import('@/views/auth/Register.vue'),
+    meta: { title: '注册', requiresAuth: false }
+  },
+
+  // --------------------------------------------------------------------------
+  // 密码修改路由（独立页面，需登录后访问）
+  // --------------------------------------------------------------------------
+  {
+    path: '/change-password',
+    name: 'PasswordChange',
+    component: () => import('@/views/auth/PasswordChange.vue'),
+    meta: { title: '修改密码', requiresAuth: false }
+  },
+
+  // --------------------------------------------------------------------------
   // 主布局路由（包含 Header + Main + Footer 的嵌套布局）
   // --------------------------------------------------------------------------
   {
@@ -119,10 +139,61 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/admin/Dashboard.vue'),
         // requiresRole: 额外的权限要求，只有 ADMIN 角色才能访问
         meta: { title: '管理后台', requiresAuth: true, requiresRole: 'ADMIN' }
+      },
+      {
+        path: 'admin/users',
+        name: 'AdminUsers',
+        component: () => import('@/views/admin/Users.vue'),
+        meta: { title: '用户管理', requiresAuth: true, requiresRole: 'ADMIN' }
+      },
+      {
+        path: 'admin/reviews',
+        name: 'AdminReviews',
+        component: () => import('@/views/admin/Reviews.vue'),
+        meta: { title: '文档审核', requiresAuth: true, requiresRole: 'ADMIN' }
+      },
+      {
+        path: 'admin/categories',
+        name: 'AdminCategories',
+        component: () => import('@/views/admin/Categories.vue'),
+        meta: { title: '分类管理', requiresAuth: true, requiresRole: 'ADMIN' }
+      },
+      {
+        path: 'admin/tags',
+        name: 'AdminTags',
+        component: () => import('@/views/admin/Tags.vue'),
+        meta: { title: '标签管理', requiresAuth: true, requiresRole: 'ADMIN' }
+      },
+      {
+        path: 'admin/settings',
+        name: 'AdminSettings',
+        component: () => import('@/views/admin/Settings.vue'),
+        meta: { title: '系统设置', requiresAuth: true, requiresRole: 'ADMIN' }
+      },
+      {
+        path: 'documents/:id/versions',
+        name: 'DocumentVersions',
+        component: () => import('@/views/document/DocumentVersions.vue'),
+        meta: { title: '版本对比', requiresAuth: true }
       }
     ]
   },
 
+  // --------------------------------------------------------------------------
+  // 错误页面路由
+  // --------------------------------------------------------------------------
+  {
+    path: '/401',
+    name: 'Unauthorized',
+    component: () => import('@/views/error/Unauthorized.vue'),
+    meta: { title: '请先登录' }
+  },
+  {
+    path: '/403',
+    name: 'Forbidden',
+    component: () => import('@/views/error/Forbidden.vue'),
+    meta: { title: '没有权限' }
+  },
   // --------------------------------------------------------------------------
   // 404 兜底路由（必须放在最后）
   // --------------------------------------------------------------------------
