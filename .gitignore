@@ -62,3 +62,6 @@ uploads/
 .backup
 .cache
 ai-service/scripts/__pycache__/
+
+# Claude Code 会话文件
+memory/
