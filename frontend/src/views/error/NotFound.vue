@@ -29,9 +29,9 @@ Vue Router 的通配路由（/:pathMatch(.*)*）会匹配并渲染此页面。
       <h2 class="error-title">页面未找到</h2>
       <p class="error-desc">抱歉，您访问的页面不存在或已被移除。</p>
       <!-- 返回首页按钮 -->
-      <el-button type="primary" size="large" @click="$router.push('/home')">
-        <el-icon><HomeFilled /></el-icon>
-        返回首页
+      <el-button plain size="large" @click="$router.back()">
+        <el-icon><ArrowLeft /></el-icon>
+        返回上一页
       </el-button>
     </div>
   </div>
@@ -39,7 +39,7 @@ Vue Router 的通配路由（/:pathMatch(.*)*）会匹配并渲染此页面。
 
 <script setup lang="ts">
 // 导入首页图标
-import { HomeFilled } from '@element-plus/icons-vue'
+import { ArrowLeft } from '@element-plus/icons-vue'
 </script>
 
 <style scoped lang="scss">
@@ -59,9 +59,7 @@ import { HomeFilled } from '@element-plus/icons-vue'
     font-size: 120px;
     font-weight: 700;
     margin: 0;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: var(--el-text-color-secondary);
     line-height: 1;
   }
 
