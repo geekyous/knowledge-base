@@ -33,14 +33,14 @@
     </div>
 
     <!-- 文档内容 -->
-    <template v-else-if="document">
+    <template v-else-if="documentData">
       <!-- ================================================================ -->
       <!-- 面包屑导航（匹配原型：首页 / 文档管理 / 文档标题） -->
       <!-- ================================================================ -->
       <el-breadcrumb separator="/" class="breadcrumb">
         <el-breadcrumb-item :to="{ path: '/home' }">首页</el-breadcrumb-item>
         <el-breadcrumb-item :to="{ path: '/documents' }">文档管理</el-breadcrumb-item>
-        <el-breadcrumb-item>{{ document.title }}</el-breadcrumb-item>
+        <el-breadcrumb-item>{{ documentData.title }}</el-breadcrumb-item>
       </el-breadcrumb>
 
       <!-- ================================================================ -->
@@ -53,7 +53,7 @@
           <el-card class="doc-header-card" shadow="never">
             <!-- 标题 + 状态标签（匹配原型） -->
             <div class="title-row">
-              <h1 class="doc-title">{{ document.title }}</h1>
+              <h1 class="doc-title">{{ documentData.title }}</h1>
               <el-tag
                 :type="statusTagType"
                 size="default"
@@ -68,30 +68,30 @@
             <div class="doc-meta">
               <span class="meta-item">
                 <el-icon><User /></el-icon>
-                {{ document.author?.username || '未知作者' }}
+                {{ documentData.author?.username || '未知作者' }}
               </span>
-              <span v-if="document.category" class="meta-item">
+              <span v-if="documentData.category" class="meta-item">
                 <el-icon><Folder /></el-icon>
-                {{ document.category.name }}
+                {{ documentData.category.name }}
               </span>
               <span class="meta-item">
                 <el-icon><Calendar /></el-icon>
-                {{ formatDate(document.createdAt) }}
+                {{ formatDate(documentData.createdAt) }}
               </span>
               <span class="meta-item">
                 <el-icon><View /></el-icon>
-                {{ document.viewCount }}
+                {{ documentData.viewCount }}
               </span>
               <span class="meta-item">
                 <el-icon><Star /></el-icon>
-                {{ document.likeCount }}
+                {{ documentData.likeCount }}
               </span>
             </div>
 
             <!-- 标签列表 -->
-            <div v-if="document.tags?.length" class="doc-tags">
+            <div v-if="documentData.tags?.length" class="doc-tags">
               <el-tag
-                v-for="tag in document.tags"
+                v-for="tag in documentData.tags"
                 :key="tag"
                 size="small"
                 type="info"
@@ -126,7 +126,7 @@
                 class="like-btn"
               >
                 <el-icon><Star /></el-icon>
-                {{ liked ? '已点赞' : '点赞' }} ({{ document.likeCount }})
+                {{ liked ? '已点赞' : '点赞' }} ({{ documentData.likeCount }})
               </el-button>
             </div>
           </el-card>
@@ -206,17 +206,15 @@ import {
   User, Calendar, View, Star, Folder, Edit, Share, Clock, List, Connection
 } from '@element-plus/icons-vue'
 import { documentApi } from '@/api/document'
-import { useUserStore } from '@/stores/user'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 import type { Document } from '@/types'
 
 const router = useRouter()
 const route = useRoute()
-const userStore = useUserStore()
 
 const loading = ref(true)
-const document = ref<Document | null>(null)
+const documentData = ref<Document | null>(null)
 const liked = ref(false)
 const bookmarked = ref(false)
 const activeHeading = ref(0)
@@ -232,7 +230,7 @@ const statusTagType = computed(() => {
     PENDING: 'warning',
     REJECTED: 'danger'
   }
-  return map[document.value?.status || ''] || 'info'
+  return map[documentData.value?.status || ''] || 'info'
 })
 
 const statusText = computed(() => {
@@ -242,7 +240,7 @@ const statusText = computed(() => {
     PENDING: '审核中',
     REJECTED: '已拒绝'
   }
-  return map[document.value?.status || ''] || '未知'
+  return map[documentData.value?.status || ''] || '未知'
 })
 
 // 日期格式化
@@ -257,7 +255,7 @@ const formatDate = (dateStr: string) => {
 
 // TOC 目录：从 Markdown 内容提取标题
 const tocItems = computed(() => {
-  const content = document.value?.content || ''
+  const content = documentData.value?.content || ''
   const headings: { level: number; text: string }[] = []
   const regex = /^(#{1,4})\s+(.+)$/gm
   let match
@@ -272,14 +270,13 @@ const tocItems = computed(() => {
 
 // Markdown 渲染（使用 marked + DOMPurify，为标题添加 id）
 const renderedContent = computed(() => {
-  const content = document.value?.content || ''
+  const content = documentData.value?.content || ''
   if (!content) return '<p style="color: #909399;">暂无内容</p>'
 
   // 为标题添加 id 以支持 TOC 跳转
   let headingIndex = 0
   const renderer = new marked.Renderer()
-  const originalHeading = renderer.heading.bind(renderer)
-  renderer.heading = function (text: string, level: number, raw: string) {
+  renderer.heading = function (text: string, level: number, _raw: string) {
     const id = `heading-${headingIndex++}`
     return `<h${level} id="${id}">${text}</h${level}>`
   }
@@ -292,7 +289,7 @@ const renderedContent = computed(() => {
 // 滚动到指定标题
 const scrollToHeading = (index: number) => {
   activeHeading.value = index
-  const el = document.getElementById(`heading-${index}`)
+  const el = window.document.getElementById(`heading-${index}`)
   if (el) {
     el.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
@@ -301,7 +298,7 @@ const scrollToHeading = (index: number) => {
 // 监听滚动，高亮当前目录项
 const handleScroll = () => {
   for (let i = tocItems.value.length - 1; i >= 0; i--) {
-    const el = document.getElementById(`heading-${i}`)
+    const el = window.document.getElementById(`heading-${i}`)
     if (el) {
       const rect = el.getBoundingClientRect()
       if (rect.top <= 120) {
@@ -315,7 +312,7 @@ const handleScroll = () => {
 
 // 操作方法
 const editDocument = () => {
-  router.push(`/documents/${document.value?.id}/edit`)
+  router.push(`/documents/${documentData.value?.id}/edit`)
 }
 
 const toggleBookmark = () => {
@@ -337,29 +334,25 @@ const viewHistory = () => {
 }
 
 const toggleLike = async () => {
-  if (!document.value) return
+  if (!documentData.value) return
   try {
     if (liked.value) {
-      await documentApi.unlike(document.value.id)
-      document.value.likeCount--
+      await documentApi.unlike(documentData.value.id)
+      documentData.value.likeCount--
     } else {
-      await documentApi.like(document.value.id)
-      document.value.likeCount++
+      await documentApi.like(documentData.value.id)
+      documentData.value.likeCount++
     }
     liked.value = !liked.value
   } catch {
     if (liked.value) {
-      document.value.likeCount--
+      documentData.value.likeCount--
     } else {
-      document.value.likeCount++
+      documentData.value.likeCount++
     }
     liked.value = !liked.value
     ElMessage.success(liked.value ? '已点赞' : '已取消点赞')
   }
-}
-
-const goBack = () => {
-  router.push('/documents')
 }
 
 const goToDocument = (id: number) => {
@@ -376,10 +369,10 @@ const fetchDocument = async () => {
   loading.value = true
   try {
     const res = await documentApi.getDetail(id)
-    document.value = res.data
+    documentData.value = res.data
   } catch (error) {
     console.error('获取文档详情失败:', error)
-    document.value = {
+    documentData.value = {
       id: id,
       title: '员工手册 - 年假制度',
       summary: '本文档详细说明了公司年假制度的相关规定',
@@ -408,11 +401,11 @@ const fetchRelated = async () => {
     const res = await documentApi.getList({
       page: 1,
       pageSize: 5,
-      categoryId: document.value?.categoryId,
+      categoryId: documentData.value?.categoryId,
       status: 'PUBLISHED'
     })
     relatedDocs.value = res.data.items
-      .filter((d: Document) => d.id !== document.value?.id)
+      .filter((d: Document) => d.id !== documentData.value?.id)
       .slice(0, 4)
       .map((d: Document) => ({ id: d.id, title: d.title, viewCount: d.viewCount }))
   } catch {

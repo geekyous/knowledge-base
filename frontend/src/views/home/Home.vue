@@ -151,8 +151,7 @@ import {
   Briefcase,
   Monitor,
   TrendCharts,
-  Key,
-  Management
+  Key
 } from '@element-plus/icons-vue'
 
 // 获取路由实例

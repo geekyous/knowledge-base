@@ -32,8 +32,7 @@ import type {
   Document,
   DocumentCreateRequest,
   DocumentUpdateRequest,
-  PageResponse,
-  ApiResponse
+  PageResponse
 } from '@/types'
 
 /**

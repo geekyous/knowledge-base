@@ -272,7 +272,7 @@ import { ref, nextTick, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
 // 导入 Element Plus 的消息提示和确认弹窗
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessageBox } from 'element-plus'
 
 // 导入图标
 import {

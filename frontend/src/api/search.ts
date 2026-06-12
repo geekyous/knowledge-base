@@ -26,7 +26,7 @@
 import { http } from '@/utils/request'
 
 // 导入搜索相关的 TypeScript 类型定义
-import type { SearchRequest, PageResponse, SearchResult, ApiResponse } from '@/types'
+import type { SearchRequest, PageResponse, SearchResult } from '@/types'
 
 /**
  * searchApi 对象包含所有搜索相关的 API 方法

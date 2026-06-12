@@ -111,7 +111,7 @@ request.interceptors.response.use(
     if (res.code === 200) {
       // 直接返回 res（而不是 response），这样 API 调用处可以直接拿到 data
       // 这是一个常见的设计决策：让调用者不需要 .data.data 就能拿到业务数据
-      return res
+      return res as any
     }
 
     // 业务错误（HTTP 成功但业务逻辑失败，如参数校验不通过）

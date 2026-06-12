@@ -25,7 +25,7 @@
 import { http } from '@/utils/request'
 
 // 导入聊天相关的 TypeScript 类型定义
-import type { ChatRequest, ChatResponse, PageResponse, Message, ApiResponse } from '@/types'
+import type { ChatRequest, ChatResponse, PageResponse, ChatMessage } from '@/types'
 
 /**
  * chatApi 对象包含所有聊天/问答相关的 API 方法
@@ -72,7 +72,7 @@ export const chatApi = {
    * 返回指定对话中的所有历史消息，用于恢复对话上下文
    */
   getConversation: (conversationId: string) => {
-    return http.get<{ messages: Message[] }>(`/v1/chat/conversations/${conversationId}`)
+    return http.get<{ messages: ChatMessage[] }>(`/v1/chat/conversations/${conversationId}`)
   },
 
   /**

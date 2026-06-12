@@ -226,7 +226,7 @@ const router = createRouter({
 // - to: 即将进入的目标路由对象
 // - from: 当前导航正要离开的路由对象
 // - next: 放行函数，必须调用才能完成导航（Vue Router 4 也支持 return 替代 next）
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, _from, next) => {
   // 在守卫中使用 Pinia store 必须在 router 创建之后，否则会报错
   const userStore = useUserStore()
 
