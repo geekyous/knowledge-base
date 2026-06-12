@@ -18,7 +18,6 @@ public class LoginRequest {
     private String username;
 
     @NotBlank(message = "密码不能为空")
-    @Size(min = 6, max = 128, message = "密码长度 6-128 个字符")
-    @Schema(description = "密码（RSA 加密后最长 128 字符）", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(description = "密码（RSA 加密密文或明文）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String password;
 }

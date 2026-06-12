@@ -57,6 +57,34 @@
         <el-menu-item index="/search">搜索</el-menu-item>
         <el-menu-item index="/documents">文档</el-menu-item>
         <el-menu-item index="/chat">智能问答</el-menu-item>
+        <!-- 管理后台子菜单：仅 ADMIN 角色可见 -->
+        <el-sub-menu v-if="userStore.currentUser?.role === 'ADMIN'" index="/admin">
+          <template #title>管理后台</template>
+          <el-menu-item index="/admin">
+            <el-icon><DataLine /></el-icon>
+            仪表板
+          </el-menu-item>
+          <el-menu-item index="/admin/users">
+            <el-icon><User /></el-icon>
+            用户管理
+          </el-menu-item>
+          <el-menu-item index="/admin/reviews">
+            <el-icon><Document /></el-icon>
+            文档审核
+          </el-menu-item>
+          <el-menu-item index="/admin/categories">
+            <el-icon><Folder /></el-icon>
+            分类管理
+          </el-menu-item>
+          <el-menu-item index="/admin/tags">
+            <el-icon><PriceTag /></el-icon>
+            标签管理
+          </el-menu-item>
+          <el-menu-item index="/admin/settings">
+            <el-icon><Setting /></el-icon>
+            系统设置
+          </el-menu-item>
+        </el-sub-menu>
       </el-menu>
 
       <!-- ================================================================== -->
@@ -65,14 +93,17 @@
       <div class="user-actions">
         <!-- v-if/v-else 条件渲染：根据登录状态显示不同内容 -->
         <template v-if="userStore.isLoggedIn">
-          <!-- 通知图标（带徽章数字） -->
-          <!--
-            el-badge: 徽章组件，用于显示通知数量
-            :hidden="notificationCount === 0" 当数量为 0 时隐藏徽章
-          -->
-          <el-badge :value="notificationCount" :hidden="notificationCount === 0" class="notification-badge">
-            <el-button :icon="Bell" circle @click="showNotifications" />
-          </el-badge>
+          <!-- 通知图标（接入 NotificationPanel 组件） -->
+          <NotificationPanel
+            v-model:visible="notificationVisible"
+            :count="notificationCount"
+            @update:count="notificationCount = $event"
+            @view-all="handleViewAllNotifications"
+          >
+            <el-badge :value="notificationCount" :hidden="notificationCount === 0" class="notification-badge">
+              <el-button :icon="Bell" circle />
+            </el-badge>
+          </NotificationPanel>
 
           <!-- 用户下拉菜单 -->
           <!--
@@ -126,7 +157,7 @@
 
 <script setup lang="ts">
 // 导入 Vue 的计算属性 API
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
 // 导入 Vue Router 的组合式 API
 // useRouter: 获取路由实例（用于编程式导航）
@@ -139,6 +170,9 @@ import { useUserStore } from '@/stores/user'
 // 导入 Element Plus 的消息提示和确认弹窗组件
 import { ElMessage, ElMessageBox } from 'element-plus'
 
+// 导入通知面板组件
+import NotificationPanel from '@/components/common/NotificationPanel.vue'
+
 // 导入 Element Plus 图标组件
 // 注意：虽然图标已在 main.ts 全局注册，这里显式导入是为了在 JS 中引用（如 :icon="Bell"）
 import {
@@ -147,7 +181,11 @@ import {
   User,
   Setting,
   SwitchButton,
-  ArrowDown
+  ArrowDown,
+  DataLine,
+  Document,
+  Folder,
+  PriceTag
 } from '@element-plus/icons-vue'
 
 // 获取路由实例和当前路由信息
@@ -163,18 +201,27 @@ const userStore = useUserStore()
  * 根据当前路由路径自动确定哪个菜单项应该高亮。
  * 例如：当前路径是 /documents，则 index="/documents" 的菜单项会高亮。
  */
-const activeMenu = computed(() => route.path)
+const activeMenu = computed(() => {
+  // 管理后台子页面统一匹配父级菜单，保持高亮
+  if (route.path.startsWith('/admin')) {
+    return '/admin'
+  }
+  return route.path
+})
 
 /**
- * 通知数量（计算属性）
- *
- * TODO: 后续需要从 store 或 API 获取实际通知数量
+ * 通知面板可见性
  */
-const notificationCount = computed(() => 0) // TODO: 从 store 获取
+const notificationVisible = ref(false)
 
-/** 显示通知面板（功能待开发） */
-const showNotifications = () => {
-  ElMessage.info('通知功能开发中')
+/**
+ * 通知未读数量（响应式，由 NotificationPanel 更新）
+ */
+const notificationCount = ref(2)
+
+/** 查看全部通知 */
+const handleViewAllNotifications = () => {
+  ElMessage.info('通知列表页开发中')
 }
 
 /**
