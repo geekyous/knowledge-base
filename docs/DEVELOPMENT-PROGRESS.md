@@ -2,7 +2,7 @@
 
 > 企业知识库问答系统 — 开发进度跟踪文档
 >
-> **最后更新：** 2026-06-10
+> **最后更新：** 2026-06-12
 
 ---
 
@@ -87,6 +87,19 @@
 - [x] 数据导入脚本（`docs/scripts/import-demo-data.py`）
 - [x] 快速开始指南（`docs/DEMO-QUICKSTART.md`）
 - [x] 演示场景指南（`docs/DEMO-SCENARIOS.md`）
+
+### Sprint 9：管理后台 API（后端 + 前端对接）
+- [x] 后端 6 个管理控制器：用户管理、文档审核、分类管理、标签管理、系统设置、仪表盘
+- [x] 8 个请求 DTO + 4 个响应 DTO（含 @Valid 校验）
+- [x] 2 个新实体：Tag、Settings + 对应 Repository
+- [x] 6 个 Service 层实现（用户 CRUD/审核/分类树/标签/设置/仪表盘统计）
+- [x] 前端 6 个管理页面全部对接真实后端 API（含 mock 降级）
+- [x] 前端 API 模块 admin.ts（6 个 API 对象，覆盖全部后端端点）
+- [x] ResponseWrapperAdvice 新增 Page→PageResponse 自动转换（content→items、totalElements→total）
+- [x] 分页参数统一为 1-based（修复前后端 off-by-one 问题）
+- [x] Users.vue 新建/编辑用户对话框（el-dialog + 表单校验 + API 对接）
+- [x] AdminUserController 重构：移除直接 UserRepository 依赖，统一走 Service 层
+- [x] Flyway 迁移脚本：V3（kb_settings 表）、V4（文档 REJECTED 状态）
 
 ### 教学注释
 - [x] Java 后端 20 个文件 — Javadoc + 💡学习要点（Spring/JPA/Security 概念）
@@ -208,6 +221,31 @@
 ---
 ## 📝 变更日志
 
+### v0.5.0 — 管理后台 API 全栈实现（2026-06-12）
+
+**新增**
+- 6 个管理控制器：AdminUserController / AdminReviewController / AdminCategoryController / AdminTagController / AdminSettingsController / AdminDashboardController
+- 8 个请求 DTO：CreateUserRequest / UpdateUserRequest / ResetPasswordRequest / ReviewActionRequest / CreateCategoryRequest / UpdateCategoryRequest / CreateTagRequest / UpdateTagRequest
+- 4 个响应 DTO：UserAdminResponse / DashboardStatsResponse / TagResponse / CategoryTreeResponse
+- Tag 实体 + TagRepository（kb_tags 表，唯一名称约束）
+- Settings 实体 + SettingsRepository（kb_settings 表，按 category 分组）
+- 6 个 Service：AdminUserService / AdminReviewService / AdminCategoryService / TagService / SettingsService / DashboardService
+- 前端 admin.ts API 模块（6 个 API 对象，覆盖全部后端端点）
+- Flyway 迁移：V3__create_settings_table.sql / V4__add_rejected_status.sql
+
+**修复**
+- ResponseWrapperAdvice 新增 Page→PageResponse 自动转换（Spring `content`→前端 `items`、`totalElements`→`total`）
+- 分页参数统一为 1-based：修复控制器 defaultValue="0" 导致的 off-by-one 问题
+- AdminUserController 移除直接 UserRepository 依赖，getUser 改走 Service 层
+- 前端 Users.vue / Reviews.vue / Dashboard.vue 分页参数对齐
+
+**优化**
+- Users.vue 新建/编辑用户：el-dialog 表单 + el-form 校验 + API 对接
+- 前端管理页面 API 不可用时保留 mock 数据降级（Dashboard / Reviews / Categories / Tags）
+- SecurityConfig 管理端点 hasRole("ADMIN") 保护已验证
+
+---
+
 ### v0.4.0 — 接口安全防护体系（2026-06-10）
 
 **新增**
@@ -318,6 +356,6 @@
 
 ---
 
-**项目版本：** v0.4.0
+**项目版本：** v0.5.0
 **仓库地址：** https://github.com/geekyous/knowledge-base
 **维护者：** Geekyous

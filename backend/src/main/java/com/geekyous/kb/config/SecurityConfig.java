@@ -84,6 +84,8 @@ public class SecurityConfig implements WebMvcConfigurer {
                 .requestMatchers("/api/v1/search/**").permitAll()
                 // 公开接口：分类浏览
                 .requestMatchers("/api/v1/categories/**").permitAll()
+                // 管理后台：需要 ADMIN 角色
+                .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                 // 公开接口：Swagger UI 和 OpenAPI 文档
                 .requestMatchers("/swagger-ui.html").permitAll()
                 .requestMatchers("/swagger-ui/**").permitAll()

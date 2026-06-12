@@ -134,9 +134,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Edit, Delete } from '@element-plus/icons-vue'
+import { adminTagApi } from '@/api/admin'
+import type { Tag } from '@/types'
 
 // ==================== 类型定义 ====================
 /** 标签数据结构 */
@@ -150,8 +152,8 @@ interface TagItem {
   createdAt: string
 }
 
-// ==================== Mock 标签数据 ====================
-const tags = ref<TagItem[]>([
+// ==================== Mock 标签数据（API 失败时的 fallback） ====================
+const mockTags: TagItem[] = [
   { id: 1,  name: '制度', color: '#1e40af', bgColor: '#dbeafe', borderColor: '#93c5fd', docCount: 56, createdAt: '2025-09-01' },
   { id: 2,  name: '规范', color: '#166534', bgColor: '#dcfce7', borderColor: '#86efac', docCount: 42, createdAt: '2025-09-05' },
   { id: 3,  name: '前端', color: '#7c3aed', bgColor: '#ede9fe', borderColor: '#c4b5fd', docCount: 35, createdAt: '2025-09-10' },
@@ -164,7 +166,39 @@ const tags = ref<TagItem[]>([
   { id: 10, name: '标准', color: '#92400e', bgColor: '#fef3c7', borderColor: '#fcd34d', docCount: 15, createdAt: '2025-10-10' },
   { id: 11, name: '新人', color: '#6d28d9', bgColor: '#ede9fe', borderColor: '#c4b5fd', docCount: 12, createdAt: '2025-10-15' },
   { id: 12, name: 'v2.0', color: '#be185d', bgColor: '#fce7f3', borderColor: '#f9a8d4', docCount: 8,  createdAt: '2025-10-20' }
-])
+]
+
+const tags = ref<TagItem[]>([])
+
+// ==================== API 数据加载 ====================
+
+/** 从 API Tag 类型派生 bgColor 和 borderColor */
+function mapTag(tag: Tag): TagItem {
+  return {
+    id: tag.id,
+    name: tag.name,
+    color: tag.color,
+    bgColor: tag.color + '20',
+    borderColor: tag.color + '40',
+    docCount: tag.docCount,
+    createdAt: tag.createdAt
+  }
+}
+
+/** 加载标签列表 */
+async function loadTags() {
+  try {
+    const res = await adminTagApi.list()
+    tags.value = (res.data ?? []).map(mapTag)
+  } catch {
+    // API 失败时使用 Mock 数据
+    tags.value = mockTags
+  }
+}
+
+onMounted(() => {
+  loadTags()
+})
 
 // ==================== 辅助函数 ====================
 
@@ -188,13 +222,38 @@ const getCloudFontSize = (docCount: number): string => {
 // ==================== 操作处理 ====================
 
 /** 新建标签 */
-const handleCreate = () => {
-  ElMessage.info('新建标签功能开发中')
+const handleCreate = async () => {
+  try {
+    const { value: name } = await ElMessageBox.prompt('请输入标签名称', '新建标签', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      inputPattern: /\S+/,
+      inputErrorMessage: '标签名称不能为空'
+    })
+    await adminTagApi.create({ name })
+    ElMessage.success(`标签「${name}」已创建`)
+    await loadTags()
+  } catch {
+    // 用户取消或 API 失败
+  }
 }
 
 /** 编辑标签 */
-const handleEdit = (row: TagItem) => {
-  ElMessage.info(`编辑标签: ${row.name}`)
+const handleEdit = async (row: TagItem) => {
+  try {
+    const { value: name } = await ElMessageBox.prompt('请输入标签名称', '编辑标签', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      inputValue: row.name,
+      inputPattern: /\S+/,
+      inputErrorMessage: '标签名称不能为空'
+    })
+    await adminTagApi.update(row.id, { name, color: row.color })
+    ElMessage.success(`标签「${name}」已更新`)
+    await loadTags()
+  } catch {
+    // 用户取消或 API 失败
+  }
 }
 
 /** 删除标签（二次确认） */
@@ -207,9 +266,14 @@ const handleDelete = (row: TagItem) => {
       cancelButtonText: '取消',
       type: 'warning'
     }
-  ).then(() => {
-    tags.value = tags.value.filter(t => t.id !== row.id)
-    ElMessage.success(`标签「${row.name}」已删除`)
+  ).then(async () => {
+    try {
+      await adminTagApi.delete(row.id)
+      ElMessage.success(`标签「${row.name}」已删除`)
+      await loadTags()
+    } catch {
+      // API 失败（拦截器已提示）
+    }
   }).catch(() => {
     // 用户取消，无需处理
   })
