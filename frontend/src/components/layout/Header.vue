@@ -57,6 +57,34 @@
         <el-menu-item index="/search">搜索</el-menu-item>
         <el-menu-item index="/documents">文档</el-menu-item>
         <el-menu-item index="/chat">智能问答</el-menu-item>
+        <!-- 管理后台子菜单：仅 ADMIN 角色可见 -->
+        <el-sub-menu v-if="userStore.currentUser?.role === 'ADMIN'" index="/admin">
+          <template #title>管理后台</template>
+          <el-menu-item index="/admin">
+            <el-icon><DataLine /></el-icon>
+            仪表板
+          </el-menu-item>
+          <el-menu-item index="/admin/users">
+            <el-icon><User /></el-icon>
+            用户管理
+          </el-menu-item>
+          <el-menu-item index="/admin/reviews">
+            <el-icon><Document /></el-icon>
+            文档审核
+          </el-menu-item>
+          <el-menu-item index="/admin/categories">
+            <el-icon><Folder /></el-icon>
+            分类管理
+          </el-menu-item>
+          <el-menu-item index="/admin/tags">
+            <el-icon><PriceTag /></el-icon>
+            标签管理
+          </el-menu-item>
+          <el-menu-item index="/admin/settings">
+            <el-icon><Setting /></el-icon>
+            系统设置
+          </el-menu-item>
+        </el-sub-menu>
       </el-menu>
 
       <!-- ================================================================== -->
@@ -153,7 +181,11 @@ import {
   User,
   Setting,
   SwitchButton,
-  ArrowDown
+  ArrowDown,
+  DataLine,
+  Document,
+  Folder,
+  PriceTag
 } from '@element-plus/icons-vue'
 
 // 获取路由实例和当前路由信息
@@ -169,7 +201,13 @@ const userStore = useUserStore()
  * 根据当前路由路径自动确定哪个菜单项应该高亮。
  * 例如：当前路径是 /documents，则 index="/documents" 的菜单项会高亮。
  */
-const activeMenu = computed(() => route.path)
+const activeMenu = computed(() => {
+  // 管理后台子页面统一匹配父级菜单，保持高亮
+  if (route.path.startsWith('/admin')) {
+    return '/admin'
+  }
+  return route.path
+})
 
 /**
  * 通知面板可见性

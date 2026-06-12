@@ -518,11 +518,6 @@ const deleteDocument = async (doc: Document) => {
   }
 }
 
-/** 上传文件提示 */
-const showUploadHint = () => {
-  uploadDialogVisible.value = true
-}
-
 /** 重置所有筛选条件 */
 const resetFilters = () => {
   filters.categoryId = undefined
