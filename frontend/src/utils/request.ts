@@ -38,7 +38,7 @@ import axios, { type AxiosError, type AxiosRequestConfig, type AxiosResponse } f
 import type { ApiResponse } from '@/types'
 
 // 导入 Element Plus 的消息提示组件，用于显示错误通知
-import { ElMessage } from 'element-plus'
+import { ElMessage, type MessageHandler } from 'element-plus'
 
 // 导入用户状态 store，用于获取 Token 和执行登出操作
 import { useUserStore } from '@/stores/user'
@@ -115,10 +115,7 @@ request.interceptors.response.use(
     }
 
     // 业务错误（HTTP 成功但业务逻辑失败，如参数校验不通过）
-    // 使用 Element Plus 的消息组件显示错误提示
-    ElMessage.error(res.message || '请求失败')
-
-    // 将业务错误转为 Promise 拒绝，让调用者的 catch 可以捕获
+    showToast('warning', res.message || '请求失败')
     return Promise.reject(new Error(res.message || '请求失败'))
   },
 
@@ -133,43 +130,88 @@ request.interceptors.response.use(
       // 服务器返回了响应，但状态码表示错误
       const { status, data } = response
 
+      // 优先使用后端返回的业务错误信息，fallback 到通用提示
+      // 后端 GlobalExceptionHandler 统一返回 { code, message } 格式
+      const backendMessage = (data as ApiResponse)?.message
+
       // 根据不同的 HTTP 状态码进行不同的处理
       switch (status) {
         case 401:
-          // 401 Unauthorized: Token 无效或已过期
-          // 需要清除本地登录状态并跳转到登录页
-          ElMessage.error('登录已过期，请重新登录')
+          // 401 Unauthorized: Token 无效或已过期 → 跳转 401 错误页
+          showToast('warning', '登录已过期，请重新登录', 4000)
           const userStore = useUserStore()
           userStore.logout()
-          // 使用 window.location.href 而非 router.push 是因为
-          // 此处可能不在 Vue 组件的上下文中，直接修改 URL 更可靠
-          window.location.href = '/login'
+          window.location.href = '/401'
           break
         case 403:
-          // 403 Forbidden: 没有权限访问该资源
-          ElMessage.error('没有权限访问')
+          // 403 Forbidden: 跳转 403 错误页，优先展示后端信息
+          showToast('warning', backendMessage || '没有权限访问')
+          window.location.href = '/403'
           break
         case 404:
-          // 404 Not Found: 请求的资源不存在
-          ElMessage.error('请求的资源不存在')
+          // 404 Not Found: 展示后端具体信息（如 "文档不存在"）
+          showToast('info', backendMessage || '请求的资源不存在')
+          break
+        case 423:
+          // 423 Locked: 账号被锁定等场景
+          showToast('warning', backendMessage || '操作被锁定，请稍后再试', 5000)
+          break
+        case 429:
+          // 429 Too Many Requests: 请求过于频繁
+          showToast('warning', backendMessage || '操作过于频繁，请稍后再试')
           break
         case 500:
-          // 500 Internal Server Error: 服务器内部错误
-          ElMessage.error('服务器错误')
+          // 500 Internal Server Error: 对用户友好，不暴露服务端细节
+          showToast('error', '服务开小差了，请稍后重试', 5000)
           break
         default:
           // 其他未专门处理的错误码
-          ElMessage.error(data?.message || '请求失败')
+          showToast('warning', backendMessage || '请求失败，请稍后重试')
       }
     } else {
       // 没有 response 说明是网络层面的错误（如断网、DNS 解析失败、CORS 错误等）
-      ElMessage.error('网络连接失败，请检查网络')
+      showToast('error', '网络连接失败，请检查网络', 5000)
     }
 
     // 将错误继续抛出，让调用者可以进一步处理
     return Promise.reject(error)
   }
 )
+
+// ============================================================================
+// Toast 消息提示封装
+// ============================================================================
+// 分级提示：error(红色) > warning(橙色) > info(蓝色)
+// 防重复：同一消息 2 秒内不重复弹出
+// ============================================================================
+const recentMessages = new Map<string, number>()
+
+function showToast(
+  type: 'success' | 'warning' | 'info' | 'error',
+  message: string,
+  duration = 3000
+): MessageHandler | undefined {
+  // 防重复：2 秒内相同消息不重复弹出（避免多个请求同时失败时刷屏）
+  const now = Date.now()
+  const lastShown = recentMessages.get(message) || 0
+  if (now - lastShown < 2000) return undefined
+  recentMessages.set(message, now)
+
+  // 清理过期记录（超过 5 秒的记录不再需要）
+  if (recentMessages.size > 20) {
+    for (const [key, time] of recentMessages) {
+      if (now - time > 5000) recentMessages.delete(key)
+    }
+  }
+
+  return ElMessage({
+    type,
+    message,
+    duration,
+    showClose: true,
+    grouping: true    // 相同内容的消息自动合并
+  })
+}
 
 // ============================================================================
 // 导出封装的 HTTP 工具对象
