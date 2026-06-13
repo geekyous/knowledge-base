@@ -34,14 +34,14 @@
 
 ```
 请求到达
-  │
+  │  ── [Servlet Filter 层 · DispatcherServlet 之前] ──
   ├── ① SecurityHeadersFilter → 添加 7 项安全响应头
   │
-  ├── ② RateLimitInterceptor → Redis 计数限流，超限返回 429
+  ├── ② JwtAuthenticationFilter（Spring Security 链成员）→ Token 解析 + 黑名单校验，写入 SecurityContext
   │
-  ├── ③ JwtAuthenticationFilter → Token 解析 + 黑名单校验
-  │
-  ├── ④ Spring Security 授权 → URL + HTTP 方法级别鉴权
+  ├── ③ Spring Security 授权（AuthorizationFilter）→ URL + HTTP 方法级别鉴权
+  │  ── DispatcherServlet ──
+  ├── ④ RateLimitInterceptor（HandlerInterceptor）→ Redis 计数限流，超限返回 429
   │
   └── ⑤ Controller → Service → BusinessException
         │
@@ -647,17 +647,12 @@ public class GlobalExceptionHandler {
 浏览器 → HTTP 请求
           │
           ▼
+    ── [Servlet Filter 层 · DispatcherServlet 之前] ──
     ① SecurityHeadersFilter (@Order(HIGHEST_PRECEDENCE))
        │ 添加 7 项安全响应头（对所有请求生效）
        │
        ▼
-    ② RateLimitInterceptor (Spring MVC HandlerInterceptor)
-       │ 检查 @RateLimit 注解
-       │ Redis INCR + EXPIRE 计数
-       │ 超限 → 429 {"code":429,"message":"请求过于频繁"}
-       │
-       ▼
-    ③ JwtAuthenticationFilter (Spring Security Filter)
+    ② JwtAuthenticationFilter（Spring Security 过滤器链成员）
        │ 提取 Bearer Token
        │ HMAC-SHA256 签名验证
        │ 过期时间检查
@@ -665,12 +660,19 @@ public class GlobalExceptionHandler {
        │ 存入 SecurityContext
        │
        ▼
-    ④ Spring Security 授权规则
+    ③ Spring Security 授权规则（AuthorizationFilter）
        │ /api/v1/auth/**  → permitAll（登录/登出）
        │ GET  /documents/** → permitAll（公开浏览）
        │ POST/PUT/DELETE /documents/** → authenticated
        │ /api/v1/search/** → permitAll
        │ 其他 → authenticated
+       │
+       ▼
+    ── DispatcherServlet ──
+    ④ RateLimitInterceptor（Spring MVC HandlerInterceptor）
+       │ 检查 @RateLimit 注解
+       │ Redis INCR + EXPIRE 计数
+       │ 超限 → 429 {"code":429,"message":"请求过于频繁"}
        │
        ▼
     ⑤ Controller → Service
@@ -687,6 +689,10 @@ public class GlobalExceptionHandler {
        ▼
     HTTP 响应（标准 ApiResponse JSON + 正确状态码 + 安全头）
 ```
+
+> **JwtAuthenticationFilter 在过滤器链中的位置**：它是 Spring Security 过滤器链的成员，经 `addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)` 注册（见 `SecurityConfig.java:98`）。SecurityConfig 注释中的「标准认证过滤器」即 `UsernamePasswordAuthenticationFilter`（Spring Security 默认的表单登录过滤器）。本项目采用无状态 JWT，身份来自 `Authorization` 头而非表单提交，故 JWT 过滤器须先于标准认证过滤器解析 Token、填充 `SecurityContext`，后续 `AuthorizationFilter` 才能据此授权。
+
+> **为什么限流发生在认证之后**：Filter 在 `DispatcherServlet` 之前执行（`SecurityHeadersFilter` / `JwtAuthenticationFilter` / 授权均在此层），`HandlerInterceptor`（`RateLimitInterceptor`）在 `DispatcherServlet` 之后、Controller 前后执行——因此限流实际发生在认证之后。若需要让限流先于认证拦截未认证流量，应将其实现为 Filter 并注册到 Security 链最前。
 
 ## 10. 已有安全能力
 
