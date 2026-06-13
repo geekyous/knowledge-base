@@ -202,6 +202,7 @@ public class RateLimitInterceptor implements HandlerInterceptor {
 
     private static final String KEY_PREFIX = "rate_limit:";
     private final StringRedisTemplate redisTemplate;
+    private final ClientIpResolver clientIpResolver;  // 可信代理感知的 IP 解析
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response,
@@ -214,8 +215,11 @@ public class RateLimitInterceptor implements HandlerInterceptor {
         RateLimit rateLimit = methodLimit != null ? methodLimit : classLimit;
         if (rateLimit == null) return true;
 
-        // 2. 构建 Redis Key: rate_limit:{key}:{ip}:{uri}
+        // 2. 解析真实客户端 IP，构建 Redis Key: rate_limit:{key}:{ip}:{uri}
         String clientIp = getClientIp(request);
+        if (clientIp == null || clientIp.isEmpty()) {
+            clientIp = "anonymous";  // 识别不到 IP 时归入匿名桶，避免字面量 "null" 互相挤占配额
+        }
         String redisKey = KEY_PREFIX + rateLimit.key() + ":" + clientIp
                           + ":" + request.getRequestURI();
 
@@ -236,10 +240,47 @@ public class RateLimitInterceptor implements HandlerInterceptor {
         return true;
     }
 
-    /** 支持 X-Forwarded-For / X-Real-IP 代理场景 */
-    private String getClientIp(HttpServletRequest request) { ... }
+    /** 委托 ClientIpResolver 解析，抵御 X-Forwarded-For 伪造 */
+    private String getClientIp(HttpServletRequest request) {
+        return clientIpResolver.resolve(request);
+    }
 }
 ```
+
+#### 客户端 IP 解析：可信代理感知
+
+`ClientIpResolver`（`config/ClientIpResolver.java`）解决了代理场景下 IP 解析的两个隐患：
+
+**隐患一：X-Forwarded-For 可伪造**
+
+Nginx 用 `$proxy_add_x_forwarded_for`，把真实客户端 IP **追加到 XFF 末尾**。客户端自带伪造头时：
+
+```
+客户端请求:  X-Forwarded-For: 1.2.3.4 (伪造)
+Nginx 转发:  X-Forwarded-For: 1.2.3.4, <真实IP>
+```
+
+旧实现 `xff.split(",")[0]` 取最左 = **伪造值**，攻击者每请求换一个 IP 即可绕过按 IP 限流。
+
+**隐患二：代理后 getRemoteAddr() 全是代理 IP**
+
+经 Nginx 转发时 `getRemoteAddr()` = Nginx 容器 IP，所有请求塌缩到同一限流桶，失去按客户端隔离的意义。
+
+**算法（抵御伪造的关键）**：仅在 TCP 对端是可信代理时才读 XFF，并从右往左跳过仍是可信代理的条目，取第一个非可信 IP：
+
+| 场景 | getRemoteAddr | XFF | 解析结果 |
+|------|--------------|-----|---------|
+| 单级代理，正常 | nginx IP（可信） | `<真实IP>` | `<真实IP>` |
+| 单级代理，客户端伪造 | nginx IP（可信） | `1.2.3.4, <真实IP>` | `<真实IP>`（伪造的最左值被跳过） |
+| 直连 :8080（绕过 Nginx） | 公网 IP（不可信） | 任意伪造 | 公网 IP（XFF 完全忽略） |
+| IDE 直跑（无代理配置） | 127.0.0.1 | 任意 | 127.0.0.1（直连模式，XFF 忽略） |
+
+**安全细节**：
+- **DNS 安全**：`getRemoteAddr()` 必为数值字面量，可安全用 `InetAddress` 全解析；XFF 来自不可信客户端（可能塞主机名触发 DNS），只走严格正则 + 字符串匹配，绝不调用 `InetAddress.getByName`。
+- **IPv4-mapped IPv6**：Docker 下 `getRemoteAddr()` 可能返回 `::ffff:172.18.0.3`，必须提取内嵌 IPv4 再匹配，否则可信代理误判 → Bug 2 复现。
+- **保守降级**：`unknown`/空/解析失败的 token 一律视为非可信，绝不误信。
+
+可信代理通过 `app.security.trusted-proxies` 配置（逗号分隔的 IP/CIDR），留空 = 直连模式。开发环境（IDE 直跑）留空最安全；Docker 下默认 `172.16.0.0/12,127.0.0.1,::1`（见 `docker-compose.yml` 与 `.env.example`）。
 
 ### 4.5 使用示例
 
@@ -262,7 +303,8 @@ public class DocumentController { ... }
 |----------|------|-----|
 | `rate_limit:{key}:{ip}:{uri}` | 接口访问计数 | 由 `@RateLimit.seconds` 决定 |
 
-示例：`rate_limit:login:192.168.1.100:/api/v1/auth/login` → `"3"`，TTL 60s
+- `{ip}`：经 `ClientIpResolver` 解析的**可信客户端 IP**（直连模式 = TCP 对端地址；代理模式 = XFF 最右非可信 IP）。识别不到时为 `anonymous`。
+- 示例：`rate_limit:login:192.168.1.100:/api/v1/auth/login` → `"3"`，TTL 60s
 
 ## 5. Token 黑名单（登出即失效）
 
@@ -716,7 +758,7 @@ public class GlobalExceptionHandler {
 | RSA 密钥对 | 应用启动时生成 | 持久化密钥对，重启不换 | 🟡 中 |
 | 请求体大小限制 | Spring 默认 1MB | 按业务需求显式配置 | 🟡 中 |
 | JWT Secret | 配置文件 | 至少 256 位随机字符串，环境变量注入 | 🔴 高 |
-| 登录限流 IP 维度 | 当前按用户名 | 可叠加 IP 维度防分布式攻击 | 🟡 中 |
+| 登录限流 IP 维度 | 已按可信客户端 IP 解析（`ClientIpResolver`） | 可叠加 IP + 用户名双维度防分布式攻击 | 🟡 中 |
 
 ---
 
