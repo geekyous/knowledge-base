@@ -147,7 +147,6 @@
 | OPT-6 | 前端 mock 数据完善 | API 失败时的 fallback mock 需要更丰富 |
 | OPT-7 | AI 对话持久化 | 当前使用内存存储，重启后丢失 |
 | OPT-8 | 文档搜索服务（SearchService） | 后端 SearchController 未接入 Elasticsearch |
-| OPT-9 | Nginx 配置文件 | `nginx/nginx.conf` 尚未创建 |
 | OPT-10 | 文件上传解析功能 | Document 上传接口仅有骨架 |
 | OPT-16 | 登录限流叠加 IP+用户名双维度 | IP 解析已可信（ClientIpResolver），可叠加双维度防分布式攻击 |
 
