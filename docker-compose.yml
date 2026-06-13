@@ -95,6 +95,9 @@ services:
       - SERVER_PORT=${SERVER_PORT:-8080}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - SECURITY_LOG_LEVEL=${SECURITY_LOG_LEVEL:-INFO}
+      # ---- 可信代理（限流器据此从 X-Forwarded-For 解析真实客户端 IP）----
+      # Docker bridge 网络下 Nginx 容器 IP 落在 172.16.0.0/12 内；留空 = 直连模式忽略 XFF
+      - TRUSTED_PROXIES=${TRUSTED_PROXIES:-172.16.0.0/12,127.0.0.1,::1}
       # ---- 初始用户密码（仅首次启动时使用，建议通过 .env 设置强密码）----
       - INIT_ADMIN_PASSWORD=${INIT_ADMIN_PASSWORD:-admin123}
       - INIT_EDITOR_PASSWORD=${INIT_EDITOR_PASSWORD:-admin123}

@@ -2,6 +2,7 @@ package com.geekyous.kb.interceptor;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.geekyous.kb.annotation.RateLimit;
+import com.geekyous.kb.config.ClientIpResolver;
 import com.geekyous.kb.dto.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -29,9 +30,11 @@ public class RateLimitInterceptor implements HandlerInterceptor {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final StringRedisTemplate redisTemplate;
+    private final ClientIpResolver clientIpResolver;
 
-    public RateLimitInterceptor(StringRedisTemplate redisTemplate) {
+    public RateLimitInterceptor(StringRedisTemplate redisTemplate, ClientIpResolver clientIpResolver) {
         this.redisTemplate = redisTemplate;
+        this.clientIpResolver = clientIpResolver;
     }
 
     @Override
@@ -50,6 +53,15 @@ public class RateLimitInterceptor implements HandlerInterceptor {
         }
 
         String clientIp = getClientIp(request);
+
+        // 正常情况下 getRemoteAddr() 兜底总能拿到客户端 IP；若仍为空（异常网络环境/容器配置），
+        // 不能直接拼进 key——字面量 "null" 会让所有匿名请求塌缩到同一桶，互相挤占配额。
+        // 这里改为按 "anonymous" 维度限流：既不让匿名请求绕过限流，又能通过日志暴露配置异常。
+        if (clientIp == null || clientIp.isEmpty()) {
+            log.warn("无法识别客户端 IP，按匿名维度限流: uri={}", request.getRequestURI());
+            clientIp = "anonymous";
+        }
+
         String redisKey = KEY_PREFIX + rateLimit.key() + ":" + clientIp + ":" + request.getRequestURI();
 
         Long count = redisTemplate.opsForValue().increment(redisKey);
@@ -75,19 +87,13 @@ public class RateLimitInterceptor implements HandlerInterceptor {
         response.getWriter().write(OBJECT_MAPPER.writeValueAsString(body));
     }
 
-    /** 从请求头中获取客户端真实 IP（支持代理场景） */
+    /**
+     * 委托 {@link ClientIpResolver} 解析真实客户端 IP。
+     *
+     * <p>仅在 TCP 对端是可信代理时才信任 X-Forwarded-For，并从右往左取首个非可信 IP，
+     * 抵御客户端伪造 XFF（旧实现取 XFF 最左值，可被任意伪造绕过限流）。
+     */
     private String getClientIp(HttpServletRequest request) {
-        String ip = request.getHeader("X-Forwarded-For");
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("X-Real-IP");
-        }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getRemoteAddr();
-        }
-        // 多级代理时取第一个 IP
-        if (ip != null && ip.contains(",")) {
-            ip = ip.split(",")[0].trim();
-        }
-        return ip;
+        return clientIpResolver.resolve(request);
     }
 }
