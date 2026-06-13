@@ -57,32 +57,15 @@
         <el-menu-item index="/search">搜索</el-menu-item>
         <el-menu-item index="/documents">文档</el-menu-item>
         <el-menu-item index="/chat">智能问答</el-menu-item>
-        <!-- 管理后台子菜单：仅 ADMIN 角色可见 -->
-        <el-sub-menu v-if="userStore.currentUser?.role === 'ADMIN'" index="/admin">
-          <template #title>管理后台</template>
-          <el-menu-item index="/admin">
-            <el-icon><DataLine /></el-icon>
-            仪表板
-          </el-menu-item>
-          <el-menu-item index="/admin/users">
-            <el-icon><User /></el-icon>
-            用户管理
-          </el-menu-item>
-          <el-menu-item index="/admin/reviews">
-            <el-icon><Document /></el-icon>
-            文档审核
-          </el-menu-item>
-          <el-menu-item index="/admin/categories">
-            <el-icon><Folder /></el-icon>
-            分类管理
-          </el-menu-item>
-          <el-menu-item index="/admin/tags">
-            <el-icon><PriceTag /></el-icon>
-            标签管理
-          </el-menu-item>
-          <el-menu-item index="/admin/settings">
-            <el-icon><Setting /></el-icon>
-            系统设置
+        <!-- 管理后台子菜单：仅管理员可见（菜单项数据见 script 的 adminMenuItems） -->
+        <el-sub-menu v-if="userStore.isAdmin" index="/admin">
+          <template #title>
+            <el-icon><Tools /></el-icon>
+            管理后台
+          </template>
+          <el-menu-item v-for="item in adminMenuItems" :key="item.index" :index="item.index">
+            <el-icon><component :is="item.icon" /></el-icon>
+            {{ item.label }}
           </el-menu-item>
         </el-sub-menu>
       </el-menu>
@@ -156,8 +139,8 @@
 </template>
 
 <script setup lang="ts">
-// 导入 Vue 的计算属性 API
-import { computed, ref } from 'vue'
+// 导入 Vue 的计算属性 API，Component 类型用于 adminMenuItems 的图标字段标注
+import { computed, ref, type Component } from 'vue'
 
 // 导入 Vue Router 的组合式 API
 // useRouter: 获取路由实例（用于编程式导航）
@@ -185,7 +168,8 @@ import {
   DataLine,
   Document,
   Folder,
-  PriceTag
+  PriceTag,
+  Tools
 } from '@element-plus/icons-vue'
 
 // 获取路由实例和当前路由信息
@@ -208,6 +192,23 @@ const activeMenu = computed(() => {
   }
   return route.path
 })
+
+/**
+ * 管理后台子菜单项
+ *
+ * index 即路由路径，配合 el-menu 的 router 属性实现点击自动跳转。
+ * 集中成数组用 v-for 渲染，避免模板里写死 6 个 el-menu-item——
+ * 后续增删菜单项只改这里，无需动模板，也降低与路由表不同步的风险。
+ * 图标是静态 import 的组件引用，存入非响应式常量数组，无需 markRaw。
+ */
+const adminMenuItems: { index: string; icon: Component; label: string }[] = [
+  { index: '/admin',            icon: DataLine, label: '仪表板' },
+  { index: '/admin/users',      icon: User,     label: '用户管理' },
+  { index: '/admin/reviews',    icon: Document, label: '文档审核' },
+  { index: '/admin/categories', icon: Folder,   label: '分类管理' },
+  { index: '/admin/tags',       icon: PriceTag, label: '标签管理' },
+  { index: '/admin/settings',   icon: Setting,  label: '系统设置' }
+]
 
 /**
  * 通知面板可见性
