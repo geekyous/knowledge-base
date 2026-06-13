@@ -2,6 +2,7 @@ package com.geekyous.kb.controller;
 
 import com.geekyous.kb.config.JwtAuthenticationFilter;
 import com.geekyous.kb.entity.User;
+import com.geekyous.kb.exception.BusinessException;
 import com.geekyous.kb.repository.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -76,7 +77,10 @@ public class UserController {
     /** 从 SecurityContext 获取当前认证用户实体 */
     private User getAuthenticatedUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        JwtAuthenticationFilter.UserDetails details = (JwtAuthenticationFilter.UserDetails) auth.getPrincipal();
+        // 防御性校验：未认证或 principal 类型不符（如匿名 "anonymousUser"）时拒绝，避免 NPE/ClassCastException
+        if (auth == null || !(auth.getPrincipal() instanceof JwtAuthenticationFilter.UserDetails details)) {
+            throw new BusinessException(401, "未认证");
+        }
         return userRepository.findById(details.id())
                 .orElseThrow(() -> new RuntimeException("用户不存在"));
     }

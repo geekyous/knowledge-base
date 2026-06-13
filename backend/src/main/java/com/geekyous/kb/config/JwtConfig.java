@@ -75,12 +75,17 @@ public class JwtConfig {
 
     /** 检查 Token 是否已过期。 */
     public boolean isTokenExpired(String token) {
-        return parseToken(token).getExpiration().before(new Date());
+        Date expiration = parseToken(token).getExpiration();
+        // 缺少 exp 声明（非法/篡改 token）按已过期处理
+        return expiration == null || expiration.before(new Date());
     }
 
     /** 获取 Token 剩余有效时间（毫秒），用于设置黑名单 TTL */
     public long getTokenRemainingMillis(String token) {
         Date expiration = parseToken(token).getExpiration();
+        if (expiration == null) {
+            return 0;
+        }
         long remaining = expiration.getTime() - System.currentTimeMillis();
         return Math.max(remaining, 0);
     }
