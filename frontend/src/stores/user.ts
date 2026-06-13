@@ -98,6 +98,15 @@ export const useUserStore = defineStore('user', () => {
   const userRole = computed(() => currentUser.value?.role)
 
   /**
+   * 是否管理员
+   *
+   * 收敛散落在组件里的 role === 'ADMIN' 字面量判断（如 Header 的管理菜单显隐），
+   * 避免权限字符串到处硬编码。仅用于 UI 层的管理员入口控制；
+   * 路由守卫仍用通用 role !== requiresRole，保留对多角色的扩展能力。
+   */
+  const isAdmin = computed(() => currentUser.value?.role === 'ADMIN')
+
+  /**
    * 用户名
    *
    * 如果 currentUser 为 null，返回空字符串作为默认值。
@@ -247,6 +256,7 @@ export const useUserStore = defineStore('user', () => {
     // Getters（计算属性）
     isLoggedIn,
     userRole,
+    isAdmin,
     userName,
     // Actions（方法）
     setToken,
