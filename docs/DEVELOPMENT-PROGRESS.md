@@ -2,7 +2,7 @@
 
 > 企业知识库问答系统 — 开发进度跟踪文档
 >
-> **最后更新：** 2026-06-12
+> **最后更新：** 2026-06-13
 
 ---
 
@@ -109,6 +109,7 @@
 
 ### Sprint 7：接口安全防护
 - [x] @RateLimit 注解 + RateLimitInterceptor — Redis IP+URI 级别限流，超限返回 429
+- [x] ClientIpResolver — 可信代理感知的客户端 IP 解析，抵御 X-Forwarded-For 伪造绕过
 - [x] LoginProtectionService — Redis 分布式计数，连续 5 次失败锁定 15 分钟
 - [x] TokenBlacklistService — Redis jti 黑名单，登出时 Token 即时失效
 - [x] SecurityHeadersFilter — CSP/HSTS/X-Frame-Options 等 7 项安全响应头
@@ -148,7 +149,7 @@
 | OPT-8 | 文档搜索服务（SearchService） | 后端 SearchController 未接入 Elasticsearch |
 | OPT-9 | Nginx 配置文件 | `nginx/nginx.conf` 尚未创建 |
 | OPT-10 | 文件上传解析功能 | Document 上传接口仅有骨架 |
-| OPT-16 | 登录限流叠加 IP 维度 | 当前按用户名限流，可叠加 IP 防分布式攻击 |
+| OPT-16 | 登录限流叠加 IP+用户名双维度 | IP 解析已可信（ClientIpResolver），可叠加双维度防分布式攻击 |
 
 ### 低优先级
 | 编号 | 事项 | 说明 |
@@ -220,6 +221,23 @@
 
 ---
 ## 📝 变更日志
+
+### v0.5.2 — 限流客户端 IP 解析安全加固（2026-06-13）
+
+**修复**
+- RateLimitInterceptor 修复 X-Forwarded-For 伪造绕过：旧实现取 XFF 最左值，可被客户端任意伪造，每请求换 IP 即可绕过按 IP 限流
+- 修复反向代理后 getRemoteAddr() 全是 Nginx IP，导致限流桶塌缩、失去按客户端隔离
+
+**新增**
+- ClientIpResolver — 可信代理感知的客户端 IP 解析器：仅在 TCP 对端是可信代理时才信任 XFF，从右往左跳过可信代理取首个非可信 IP
+- app.security.trusted-proxies 配置（IP/CIDR，留空=直连模式最安全）；docker-compose / .env.example 默认 172.16.0.0/12,127.0.0.1,::1
+- ClientIpResolverTest — 13 个单测覆盖伪造 / 多级代理链 / IPv4-mapped / CIDR 边界 / DNS 安全
+
+**优化**
+- 处理 IPv4-mapped IPv6（::ffff:172.x）；XFF 走 DNS 安全的纯字符串匹配，绝不解析主机名
+- 同步 security-design.md §4.4 / §4.6 / §11
+
+---
 
 ### v0.5.0 — 管理后台 API 全栈实现（2026-06-12）
 
@@ -356,6 +374,6 @@
 
 ---
 
-**项目版本：** v0.5.0
+**项目版本：** v0.5.2
 **仓库地址：** https://github.com/geekyous/knowledge-base
 **维护者：** Geekyous
