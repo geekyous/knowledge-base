@@ -52,10 +52,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     return;
                 }
 
-                // 3. 从 Claims 中提取用户信息
+                // 3. 从 Claims 中提取用户信息（缺字段或类型不符则视为非法 token，跳过认证）
                 String username = claims.getSubject();
                 String role = claims.get("role", String.class);
-                Long userId = ((Number) claims.get("userId")).longValue();
+                Object rawUserId = claims.get("userId");
+                if (username == null || role == null || !(rawUserId instanceof Number)) {
+                    log.warn("JWT claims 缺失必要字段或类型不符，跳过认证: username={}, role={}, userId={}",
+                            username, role, rawUserId);
+                    filterChain.doFilter(request, response);
+                    return;
+                }
+                Long userId = ((Number) rawUserId).longValue();
 
                 // 4. 将角色映射为 Spring Security GrantedAuthority
                 List<SimpleGrantedAuthority> authorities = List.of(

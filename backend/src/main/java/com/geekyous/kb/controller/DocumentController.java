@@ -6,6 +6,7 @@ import com.geekyous.kb.dto.request.CreateDocumentRequest;
 import com.geekyous.kb.dto.request.UpdateDocumentRequest;
 import com.geekyous.kb.entity.Document;
 import com.geekyous.kb.entity.User;
+import com.geekyous.kb.exception.BusinessException;
 import com.geekyous.kb.repository.UserRepository;
 import com.geekyous.kb.service.DocumentService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -104,7 +105,10 @@ public class DocumentController {
     /** 从 SecurityContext 获取当前登录用户实体 */
     private User getCurrentUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        JwtAuthenticationFilter.UserDetails details = (JwtAuthenticationFilter.UserDetails) auth.getPrincipal();
+        // 防御性校验：未认证或 principal 类型不符（如匿名 "anonymousUser"）时拒绝，避免 NPE/ClassCastException
+        if (auth == null || !(auth.getPrincipal() instanceof JwtAuthenticationFilter.UserDetails details)) {
+            throw new BusinessException(401, "未认证");
+        }
         return userRepository.findById(details.id())
                 .orElseThrow(() -> new RuntimeException("用户不存在"));
     }

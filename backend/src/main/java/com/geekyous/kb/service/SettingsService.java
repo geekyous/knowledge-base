@@ -53,6 +53,9 @@ public class SettingsService {
      */
     @Transactional
     public void updateSettings(Map<String, String> settings) {
+        if (settings == null || settings.isEmpty()) {
+            return;
+        }
         settings.forEach((key, value) -> {
             Settings setting = settingsRepository.findBySettingKey(key)
                     .orElseThrow(() -> new com.geekyous.kb.exception.BusinessException(404, "设置项不存在: " + key));

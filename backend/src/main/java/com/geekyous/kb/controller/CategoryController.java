@@ -1,6 +1,7 @@
 package com.geekyous.kb.controller;
 
 import com.geekyous.kb.entity.Category;
+import com.geekyous.kb.exception.BusinessException;
 import com.geekyous.kb.repository.CategoryRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -41,7 +42,8 @@ public class CategoryController {
     @GetMapping("/{id}")
     @Operation(summary = "获取分类详情")
     public Category get(@PathVariable Long id) {
-        return categoryRepository.findById(id).orElse(null);
+        return categoryRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(404, "分类不存在"));
     }
 
     @GetMapping("/{id}/children")
