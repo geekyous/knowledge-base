@@ -2,7 +2,7 @@
 
 > 企业知识库问答系统 — 开发进度跟踪文档
 >
-> **最后更新：** 2026-06-13
+> **最后更新：** 2026-06-14
 
 ---
 
@@ -220,6 +220,26 @@
 
 ---
 ## 📝 变更日志
+
+### v0.5.3 — RSA 密钥持久化（生产加固）（2026-06-14）
+
+**新增**
+- `RsaKeyConfig` 支持从环境变量 `RSA_PRIVATE_KEY`（PKCS8 DER Base64）加载持久化密钥对，公钥从私钥派生（`RSAPrivateCrtKey` → modulus + publicExponent），数学上保证公私钥配对一致，杜绝双配置项不匹配
+- `rsa.strict` 双模式：默认 `false`（开发，私钥缺失回退随机生成 + WARN）；生产设 `RSA_STRICT=true` 缺失即抛 `IllegalStateException` 阻断启动
+- `RsaKeyConfigTest`（7 用例）+ `RsaUtilTest`（6 用例）— 填补 RSA 零测试覆盖，覆盖私钥加载/公钥派生/双模式/Base64 容错/加密往返
+
+**优化**
+- Base64 容错 `normalizeKey`：兼容单行 Base64 / 多行 PEM / 带 `-----BEGIN/END-----` 头尾三种粘贴形态，去 PEM header + 压平换行空白
+- 注入风格对齐 `JwtConfig`（`@Value`），`RsaKeyConfig` 不再是仓库里唯一不遵循"从配置读密钥"模式的安全配置类
+- strict + 持久化让 `RsaUtil.tryDecrypt` 明文回退触发概率从「重启即触发」降到「仅前端加密失败」
+
+**配置同步**
+- `application.yml` 新增 `rsa` 配置段（private-key + strict）
+- `.env.example` 新增 `RSA_PRIVATE_KEY` / `RSA_STRICT` 及 openssl 生成命令
+- `docker-compose.yml` backend `environment` 透传 `RSA_PRIVATE_KEY` / `RSA_STRICT`
+- `security-design.md` §11 生产加固清单「RSA 密钥对」项标记已闭环
+
+---
 
 ### v0.5.2 — 限流客户端 IP 解析安全加固（2026-06-13）
 

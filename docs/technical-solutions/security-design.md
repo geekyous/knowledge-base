@@ -761,7 +761,7 @@ public class GlobalExceptionHandler {
 | HSTS | 已配置但 HTTP 下不生效 | 确保 Nginx/CDN 强制 HTTPS 重定向 | 🟠 高 |
 | CORS 域名 | 默认 `localhost` | 环境变量设置生产域名 | 🔴 高 |
 | Jasypt 主密钥 | 开发环境硬编码 | 仅存 `.env` / 密钥管理服务 | 🔴 高 |
-| RSA 密钥对 | 应用启动时生成 | 持久化密钥对，重启不换 | 🟡 中 |
+| RSA 密钥对 | ✅ 已持久化（PKCS8 私钥 + 公钥派生，环境变量 `RSA_PRIVATE_KEY` 注入） | 生产设 `RSA_STRICT=true` 强约束 | ✅ 已闭环 |
 | 请求体大小限制 | Spring 默认 1MB | 按业务需求显式配置 | 🟡 中 |
 | JWT Secret | 配置文件 | 至少 256 位随机字符串，环境变量注入 | 🔴 高 |
 | 登录限流 IP 维度 | 已按可信客户端 IP 解析（`ClientIpResolver`） | 可叠加 IP + 用户名双维度防分布式攻击 | 🟡 中 |
@@ -772,4 +772,4 @@ public class GlobalExceptionHandler {
 **创建日期：** 2026-06-10
 **最后更新：** 2026-06-10
 **状态：** 已完成
-**关联文档：** [F01-auth 技术设计](../features/F01-auth/02-technical.md)、[CLAUDE.md 安全底线](../../CLAUDE.md)
+**关联文档：** [角色权限设计方案](permission-design.md)（授权模型：接口级/数据级/字段级）、[F01-auth 技术设计](../features/F01-auth/02-technical.md)、[CLAUDE.md 安全底线](../../CLAUDE.md)

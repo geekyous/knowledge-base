@@ -85,6 +85,9 @@ services:
       # ---- JWT 密钥（⚠️ 生产环境务必通过 .env 设置强密钥）----
       - JWT_SECRET=${JWT_SECRET:-change-this-in-production}
       - JWT_EXPIRATION=${JWT_EXPIRATION:-86400}
+      # ---- RSA 密码加密密钥对（生产建议 RSA_STRICT=true + 配置 RSA_PRIVATE_KEY）----
+      - RSA_PRIVATE_KEY=${RSA_PRIVATE_KEY:-}
+      - RSA_STRICT=${RSA_STRICT:-false}
       # ---- Jasypt 主密钥（仅当环境变量值中使用 ENC() 密文时需要）----
       - JASYPT_ENCRYPTOR_PASSWORD=${JASYPT_ENCRYPTOR_PASSWORD:-}
       # ---- 文件上传 ----
