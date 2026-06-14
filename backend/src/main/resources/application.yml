@@ -108,6 +108,16 @@ jwt:
   secret: ${JWT_SECRET:dev-only-secret-key-do-not-use-in-production-abcdefg1234567}
   expiration: ${JWT_EXPIRATION:86400}
 
+# RSA 密码加密密钥对
+#   private-key: PKCS8 DER Base64 私钥（仅私钥，公钥启动时派生，保证配对一致）
+#   留空 + strict=false → 回退启动随机生成（开发）；strict=true → 抛异常阻断启动（生产）
+#   生成命令（项目根目录）：
+#     openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out /tmp/rsa_private.pem
+#     openssl pkcs8 -topk8 -nocrypt -in /tmp/rsa_private.pem -outform DER | base64 | tr -d '\n'
+rsa:
+  private-key: ${RSA_PRIVATE_KEY:}
+  strict: ${RSA_STRICT:false}
+
 # ---------------------------------------------------------------------------
 # 应用配置
 # ---------------------------------------------------------------------------
